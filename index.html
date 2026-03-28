@@ -701,6 +701,104 @@
       transition: background 0.2s;
     }
     .token-form button:hover { background: var(--purple-light); }
+
+    /* ── HAMBURGER BUTTON ── */
+    .hamburger-btn {
+      display: none;
+      background: none;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      color: var(--text-2);
+      font-size: 18px;
+      padding: 5px 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all .15s;
+    }
+    .hamburger-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+    /* ── MOBILE OVERLAY ── */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 99;
+    }
+    .sidebar-overlay.active { display: block; }
+
+    /* ── RESPONSIVE: ≤ 768px ── */
+    @media (max-width: 768px) {
+      body { overflow: auto; }
+
+      .hamburger-btn { display: flex; align-items: center; }
+
+      .sidebar-nav {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        z-index: 100;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+      }
+      .sidebar-nav.mobile-open {
+        transform: translateX(0);
+      }
+
+      .main { width: 100%; }
+
+      .topbar { padding: 10px 14px; gap: 8px; }
+      .topbar-title { font-size: 16px; }
+      .search-box { width: 140px; padding: 6px 10px; }
+      .topbar-chip { padding: 5px 8px; font-size: 11px; }
+
+      .content { padding: 12px 12px; }
+
+      .stats-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .grid-2 {
+        flex-direction: column;
+        gap: 12px;
+      }
+      #panel-feed    { flex: none; width: 100%; min-width: 0; }
+      #panel-analysis { flex: none; width: 100%; min-width: 0; }
+      .drag-handle   { display: none; }
+
+      .charts-row { grid-template-columns: 1fr; }
+
+      .footer { padding: 6px 12px; font-size: 10px; flex-wrap: wrap; gap: 4px; }
+    }
+
+    /* ── RESPONSIVE: ≤ 480px ── */
+    @media (max-width: 480px) {
+      .stats-row { grid-template-columns: 1fr; }
+
+      .topbar-title { font-size: 14px; }
+      .search-box { width: 110px; font-size: 12px; }
+      .topbar-chip { display: none; }
+
+      .stat-val  { font-size: 22px; }
+      .stat-lbl  { font-size: 11px; }
+      .stat-card { padding: 14px 14px; }
+
+      .card-title { font-size: 12px; }
+      .filter-tabs .ftab { padding: 4px 8px; font-size: 11px; }
+
+      .alert-meta-row  { display: none; }
+      .alert-time-badge { display: none; }
+      .rs-pill          { display: none; }
+      .status-dot       { display: none; }
+
+      .analyze-btn { width: 100%; font-size: 12px; }
+      .hunt-run-btn { width: 100%; }
+      .hunt-bar { flex-direction: column; }
+
+      .analysis-box-body { font-size: 11px; }
+      .empty-state h3 { font-size: 13px; }
+      .empty-state p  { font-size: 11px; }
+    }
   </style>
 </head>
 <body>
@@ -740,6 +838,7 @@
 
     <!-- TOPBAR -->
     <div class="topbar">
+      <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()" aria-label="Toggle navigation">☰</button>
       <div class="topbar-title" id="topbar-title">Dashboard</div>
       <div class="search-box">
         <span style="color:#475569">🔍</span>
@@ -914,6 +1013,9 @@
     </div>
 
   </div>
+
+  <!-- Mobile sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <script>
     // ── ALERT DATA ────────────────────────────────────────────────────────────────
@@ -2001,6 +2103,14 @@ Under each header write the relevant content. Be specific, technical, and action
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
     });
+
+    // ── MOBILE SIDEBAR TOGGLE ─────────────────────────────────────────────────────
+    function toggleSidebar() {
+      const nav = document.querySelector('.sidebar-nav');
+      const overlay = document.getElementById('sidebar-overlay');
+      nav.classList.toggle('mobile-open');
+      overlay.classList.toggle('active');
+    }
   </script>
 
 </body>
