@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SOC Analyst AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0f0e1a;
+      --sidebar-bg: linear-gradient(180deg, #1a1a3e 0%, #16163a 100%);
+      --card-bg:    rgba(255,255,255,0.05);
+      --card-border:rgba(255,255,255,0.08);
+      --card-hover: rgba(255,255,255,0.09);
+      --purple:     #7c5cbf;
+      --purple-light:#a78bfa;
+      --blue:       #60a5fa;
+      --cyan:       #22d3ee;
+      --green:      #34d399;
+      --pink:       #f472b6;
+      --orange:     #fb923c;
+      --red:        #f87171;
+      --amber:      #fbbf24;
+      --text:       #e2e8f0;
+      --text-2:     #94a3b8;
+      --text-3:     #475569;
+      --sans:       'Inter', sans-serif;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar-nav {
+      width: 260px;
+      flex-shrink: 0;
+      background: linear-gradient(180deg, #1e1b4b 0%, #1a1a3e 60%, #0f172a 100%);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+      border-right: 1px solid rgba(255,255,255,0.05);
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+    .sidebar-nav::-webkit-scrollbar { display: none; }
+
+    .sidebar-chart-wrap {
+      padding: 0 14px;
+      height: 140px;
+      position: relative;
+    }
+    .sidebar-chart-label {
+      font-size: 10px; font-weight: 600;
+      color: var(--text-3); letter-spacing: .08em;
+      padding: 10px 14px 6px;
+    }
+
+    .brand {
+      padding: 0 20px 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 16px;
+    }
+    .brand-name {
+      font-size: 20px; font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .brand-sub { font-size: 10px; color: var(--text-3); margin-top: 2px; letter-spacing: .08em; }
+
+    .nav-section-label {
+      font-size: 10px; font-weight: 600;
+      color: var(--text-3); letter-spacing: .1em;
+      padding: 0 20px; margin: 12px 0 6px;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 20px;
+      font-size: 13px; color: var(--text-2);
+      cursor: pointer; transition: all .15s;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .nav-item.active {
+      color: var(--purple-light);
+      background: rgba(167,139,250,0.1);
+      border-left-color: var(--purple-light);
+    }
+    .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+    .nav-badge {
+      margin-left: auto;
+      background: rgba(248,113,113,0.2);
+      color: var(--red);
+      font-size: 10px; font-weight: 700;
+      padding: 1px 7px; border-radius: 10px;
+    }
+
+    .sidebar-nav-footer {
+      margin-top: auto;
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .user-row {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .user-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; flex-shrink: 0;
+    }
+    .user-name  { font-size: 13px; font-weight: 600; }
+    .user-role  { font-size: 11px; color: var(--text-3); }
+
+    /* ── MAIN ── */
+    .main {
+      flex: 1; display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 24px;
+      background: rgba(15,14,26,0.8);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      flex-shrink: 0;
+    }
+
+    .topbar-title { font-size: 20px; font-weight: 700; }
+
+    .search-box {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 7px 14px;
+      width: 220px;
+    }
+    .search-box input {
+      background: none; border: none; outline: none;
+      color: var(--text); font-size: 13px; width: 100%;
+    }
+    .search-box input::placeholder { color: var(--text-3); }
+
+    .topbar-chip {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; padding: 6px 12px;
+      font-size: 12px; color: var(--text-2); cursor: pointer;
+      transition: all .15s;
+    }
+    .topbar-chip:hover { background: rgba(255,255,255,0.09); color: var(--text); }
+
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: blink 2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ── CONTENT ── */
+    .content {
+      flex: 1; overflow-y: auto; overflow-x: hidden;
+      padding: 20px 24px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.1) transparent;
+    }
+
+    /* ── STAT CARDS ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex; align-items: center; gap: 14px;
+      transition: all .2s;
+    }
+    .stat-card:hover { background: var(--card-hover); transform: translateY(-2px); }
+
+    .stat-icon {
+      width: 46px; height: 46px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .stat-val  { font-size: 26px; font-weight: 700; line-height: 1; }
+    .stat-lbl  { font-size: 12px; color: var(--text-2); margin-top: 3px; }
+    .stat-sub  { font-size: 11px; margin-top: 5px; }
+
+    /* ── GRID ── */
+    .grid-2 {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+    }
+    #panel-feed {
+      flex: 1;
+      min-width: 300px;
+      overflow: hidden;
+    }
+    #panel-analysis {
+      flex: 0 0 380px;
+      min-width: 280px;
+      overflow: hidden;
+    }
+
+    /* ── DRAG HANDLE ── */
+    .drag-handle {
+      width: 12px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: col-resize;
+      position: relative;
+      z-index: 10;
+    }
+    .drag-handle::before {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      left: 50%; transform: translateX(-50%);
+      width: 4px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 2px;
+      transition: background 0.2s;
+    }
+    .drag-handle:hover::before, .drag-handle.dragging::before {
+      background: rgba(167,139,250,0.4);
+    }
+    .drag-grip {
+      font-size: 13px;
+      color: var(--text-3);
+      line-height: 1;
+      user-select: none;
+      pointer-events: none;
+      position: relative;
+      z-index: 1;
+      transition: color 0.2s;
+    }
+    .drag-handle:hover .drag-grip, .drag-handle.dragging .drag-grip {
+      color: var(--purple-light);
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .card-title {
+      font-size: 14px; font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+
+    /* ── FILTER TABS ── */
+    .filter-tabs {
+      display: flex; gap: 4px;
+    }
+    .ftab {
+      padding: 5px 12px; border-radius: 6px;
+      font-size: 12px; font-weight: 500;
+      border: none; background: none;
+      color: var(--text-2); cursor: pointer;
+      transition: all .15s;
+    }
+    .ftab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+    .ftab.active { background: rgba(167,139,250,0.2); color: var(--purple-light); }
+    .ftab.fc { color: var(--red); }
+    .ftab.fh { color: var(--orange); }
+    .ftab.fm { color: var(--blue); }
+    .ftab.fl { color: var(--green); }
+    .ftab.fc.active { background: rgba(248,113,113,0.15); }
+    .ftab.fh.active { background: rgba(251,146,60,0.15); }
+    .ftab.fm.active { background: rgba(96,165,250,0.15); }
+    .ftab.fl.active { background: rgba(52,211,153,0.15); }
+
+    /* ── ALERT LIST ── */
+    .alert-list { overflow-y: auto; max-height: 480px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; padding-right: 16px; }
+
+    .alert-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      cursor: pointer; transition: background .15s;
+    }
+    .alert-row:hover    { background: rgba(255,255,255,0.04); }
+    .alert-row.selected { background: rgba(167,139,250,0.1); border-left: 3px solid var(--purple-light); }
+    .alert-row.crit-row { border-left: 3px solid var(--red); }
+    .alert-row.crit-row.selected { border-left-color: var(--red); }
+
+    .sev-pill {
+      padding: 3px 9px; border-radius: 20px;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .05em; white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .sev-critical { background: rgba(248,113,113,0.15); color: var(--red);    border: 1px solid rgba(248,113,113,0.3); }
+    .sev-high     { background: rgba(251,146,60,0.15);  color: var(--orange); border: 1px solid rgba(251,146,60,0.3);  }
+    .sev-medium   { background: rgba(96,165,250,0.15);  color: var(--blue);   border: 1px solid rgba(96,165,250,0.3);  }
+    .sev-low      { background: rgba(52,211,153,0.15);  color: var(--green);  border: 1px solid rgba(52,211,153,0.3);  }
+
+    .alert-info { flex: 1; min-width: 0; }
+    .alert-title-text {
+      font-size: 13px; font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .alert-meta-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 3px; font-size: 11px; color: var(--text-3);
+    }
+    .meta-sep { color: var(--text-3); opacity: .4; }
+
+    .alert-time-badge {
+      font-size: 11px; color: var(--text-3);
+      flex-shrink: 0; font-variant-numeric: tabular-nums;
+      margin-left: auto;
+    }
+
+    .status-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    /* ── ANALYSIS PANEL ── */
+    .analysis-panel { display: flex; flex-direction: column; height: 100%; }
+
+    .empty-state {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px 24px; text-align: center;
+    }
+    .empty-ring {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: rgba(167,139,250,0.1);
+      border: 1px solid rgba(167,139,250,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; margin-bottom: 16px;
+    }
+    .empty-state h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .empty-state p  { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+    .card-analysis { display: flex; flex-direction: column; }
+    .sidebar-scroll { padding: 14px; display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }
+
+    .detail-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .detail-card-title {
+      font-size: 12px; font-weight: 600; color: var(--text-2);
+      margin-bottom: 12px; display: flex; justify-content: space-between;
+    }
+    .detail-id { color: var(--purple-light); font-size: 11px; }
+
+    .detail-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      margin-bottom: 12px;
+    }
+    .detail-cell { display: flex; flex-direction: column; }
+    .cell-lbl { font-size: 10px; color: var(--text-3); margin-bottom: 3px; letter-spacing: .05em; }
+    .cell-val {
+      font-size: 12px; font-weight: 500;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 5px; padding: 4px 8px;
+    }
+    .cell-val.ip { color: var(--cyan); }
+    .st-new  { color: var(--red); }
+    .st-open { color: var(--amber); }
+
+    .mitre-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .mitre-tag {
+      background: rgba(167,139,250,0.12);
+      border: 1px solid rgba(167,139,250,0.25);
+      color: var(--purple-light);
+      font-size: 10px; padding: 3px 8px; border-radius: 4px;
+    }
+
+    .analyze-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff; border: none; border-radius: 10px;
+      padding: 12px; font-size: 13px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 8px;
+      transition: all .2s;
+    }
+    .analyze-btn:hover   { opacity: .9; box-shadow: 0 4px 20px rgba(124,58,237,0.4); }
+    .analyze-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    .analysis-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px; overflow: hidden;
+    }
+    .analysis-box-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 12px; font-weight: 600; color: var(--text-2);
+    }
+    .analysis-box-body { padding: 12px 14px; font-size: 12px; line-height: 1.7; color: var(--text-2); }
+    .analysis-placeholder { color: var(--text-3); font-style: italic; font-size: 12px; }
+
+    .loading-dots { display: flex; align-items: center; gap: 12px; }
+    .loading-dots-inner { display: flex; align-items: center; gap: 5px; }
+    .loading-dots span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--purple-light);
+      animation: bounce 1.2s infinite;
+    }
+    .loading-dots span:nth-child(2) { animation-delay: .2s; }
+    .loading-dots span:nth-child(3) { animation-delay: .4s; }
+    .loading-label { font-size: 12px; color: var(--text-2); }
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-5px);opacity:1} }
+
+    /* ── CHART CARDS ── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .chart-wrap { padding: 12px 16px; height: 200px; position: relative; }
+
+    /* ── FOOTER ── */
+    .footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 24px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      font-size: 11px; color: var(--text-3);
+      flex-shrink: 0;
+      background: rgba(15,14,26,0.6);
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    /* ── TIER TOGGLE ── */
+    .tier-toggle {
+      display: flex; gap: 4px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px; padding: 4px;
+    }
+    .tier-btn {
+      flex: 1; padding: 6px 4px;
+      background: none; border: 1px solid transparent;
+      color: var(--text-2); font-size: 11px; font-weight: 600;
+      border-radius: 5px; cursor: pointer; transition: all .15s;
+      text-align: center;
+    }
+    .tier-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+    .tier-btn.active { background: rgba(167,139,250,0.2); color: var(--purple-light); border-color: rgba(167,139,250,0.3); }
+    .tier-btn.t2.active { background: rgba(96,165,250,0.2); color: var(--blue); border-color: rgba(96,165,250,0.3); }
+    .tier-btn.t3.active { background: rgba(34,211,238,0.2); color: var(--cyan); border-color: rgba(34,211,238,0.3); }
+
+    /* ── VERDICT CARD ── */
+    .verdict-card {
+      border-radius: 10px; padding: 12px 14px;
+      border: 1px solid;
+    }
+    .verdict-card.tp  { background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.3); }
+    .verdict-card.lfp { background: rgba(251,146,60,0.08);  border-color: rgba(251,146,60,0.3); }
+    .verdict-card.fp  { background: rgba(52,211,153,0.08);  border-color: rgba(52,211,153,0.3); }
+    .verdict-card.ni  { background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.3); }
+    .verdict-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .verdict-label { font-size: 11px; font-weight: 700; letter-spacing: .07em; }
+    .verdict-label.tp  { color: var(--red); }
+    .verdict-label.lfp { color: var(--orange); }
+    .verdict-label.fp  { color: var(--green); }
+    .verdict-label.ni  { color: var(--purple-light); }
+    .verdict-conf { font-size: 22px; font-weight: 700; }
+    .verdict-conf.tp  { color: var(--red); }
+    .verdict-conf.lfp { color: var(--orange); }
+    .verdict-conf.fp  { color: var(--green); }
+    .verdict-conf.ni  { color: var(--purple-light); }
+    .verdict-just { font-size: 11px; color: var(--text-2); line-height: 1.5; margin-top: 2px; }
+
+    /* ── CONFIDENCE BAR ── */
+    .conf-bar-label { font-size: 10px; font-weight: 600; color: var(--text-3); letter-spacing: .06em; margin-bottom: 6px; }
+    .conf-bar-track { height: 5px; border-radius: 3px; background: rgba(255,255,255,0.06); overflow: hidden; }
+    .conf-bar-fill  { height: 100%; border-radius: 3px; width: 0%; transition: width 1s cubic-bezier(.4,0,.2,1); }
+
+    /* ── ANALYST NOTES ── */
+    .notes-section { display: flex; flex-direction: column; gap: 6px; }
+    .notes-label { font-size: 10px; font-weight: 600; color: var(--text-3); letter-spacing: .06em; }
+    .notes-textarea {
+      width: 100%; min-height: 68px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; padding: 8px 10px;
+      color: var(--text); font-family: var(--sans); font-size: 12px;
+      resize: vertical; outline: none; transition: border-color .15s;
+    }
+    .notes-textarea:focus { border-color: rgba(167,139,250,0.4); }
+    .notes-textarea::placeholder { color: var(--text-3); }
+    .save-note-btn {
+      align-self: flex-end;
+      background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.3);
+      color: var(--purple-light); border-radius: 7px; padding: 5px 14px;
+      font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s;
+    }
+    .save-note-btn:hover { background: rgba(167,139,250,0.25); }
+    .save-note-btn.saved { color: var(--green); border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.1); }
+
+    /* ── STAT CARD INTERACTIVE ── */
+    .stat-card { cursor: pointer; }
+    .stat-card.sc-red:hover    { border-color: rgba(248,113,113,0.45); box-shadow: 0 0 0 1px rgba(248,113,113,0.15), 0 4px 20px rgba(248,113,113,0.1); }
+    .stat-card.sc-orange:hover { border-color: rgba(251,146,60,0.45);  box-shadow: 0 0 0 1px rgba(251,146,60,0.15),  0 4px 20px rgba(251,146,60,0.1);  }
+    .stat-card.sc-blue:hover   { border-color: rgba(96,165,250,0.45);  box-shadow: 0 0 0 1px rgba(96,165,250,0.15),  0 4px 20px rgba(96,165,250,0.1);  }
+    .stat-card.sc-purple:hover { border-color: rgba(167,139,250,0.45); box-shadow: 0 0 0 1px rgba(167,139,250,0.15), 0 4px 20px rgba(167,139,250,0.1); }
+
+    /* ── MITRE MAP VIEW ── */
+    .view-subtitle { font-size: 13px; color: var(--text-2); margin-bottom: 20px; }
+    .mitre-wrap { overflow-x: auto; padding-bottom: 8px; }
+    .mitre-grid { display: flex; gap: 10px; min-width: max-content; }
+    .mitre-col  {
+      width: 130px; flex-shrink: 0;
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 10px; padding: 10px 8px;
+    }
+    .mitre-col-head {
+      font-size: 10px; font-weight: 700; letter-spacing: .06em;
+      text-align: center; margin-bottom: 10px;
+      padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .mitre-tech {
+      font-size: 10px; font-weight: 600; border-radius: 4px;
+      padding: 4px 6px; margin-bottom: 5px; line-height: 1.3; text-align: center;
+    }
+    .mitre-empty { font-size: 10px; color: var(--text-3); text-align: center; padding: 10px 4px; font-style: italic; }
+
+    /* ── GEOGRAPHY VIEW ── */
+    .geo-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .geo-table th {
+      text-align: left; font-size: 10px; font-weight: 600;
+      color: var(--text-3); letter-spacing: .08em;
+      padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .geo-table td { padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; font-size: 12px; }
+    .geo-table tr:last-child td { border-bottom: none; }
+    .geo-table tr:hover td { background: rgba(255,255,255,0.025); }
+    .geo-region { display: flex; align-items: center; gap: 6px; }
+
+    /* ── THREAT HUNT VIEW ── */
+    .hunt-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+    .hunt-input {
+      flex: 1; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 9px;
+      padding: 10px 14px; color: var(--text); font-family: var(--sans);
+      font-size: 13px; outline: none; transition: border-color .15s;
+    }
+    .hunt-input:focus { border-color: rgba(167,139,250,0.5); }
+    .hunt-input::placeholder { color: var(--text-3); }
+    .hunt-run-btn {
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff; border: none; border-radius: 9px;
+      padding: 10px 22px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: opacity .2s; white-space: nowrap;
+    }
+    .hunt-run-btn:hover    { opacity: .88; }
+    .hunt-run-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .hunt-output {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 12px; overflow: hidden;
+    }
+    .hunt-section { padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .hunt-section:last-child { border-bottom: none; }
+    .hunt-section-title { font-size: 10px; font-weight: 700; color: var(--text-3); letter-spacing: .08em; margin-bottom: 8px; }
+    .hunt-section-body  { font-size: 12px; color: var(--text-2); line-height: 1.7; }
+    .hunt-placeholder   { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px; text-align: center; }
+    .hunt-placeholder p { font-size: 13px; color: var(--text-3); margin-top: 10px; }
+
+    /* ── RISK SCORE ── */
+    .rs-pill { padding:2px 7px; border-radius:10px; font-size:10px; font-weight:700; letter-spacing:.04em; flex-shrink:0; }
+    .rs-red    { background:rgba(248,113,113,0.15); color:#f87171; border:1px solid rgba(248,113,113,0.3); }
+    .rs-orange { background:rgba(251,146,60,0.15);  color:#fb923c; border:1px solid rgba(251,146,60,0.3);  }
+    .rs-blue   { background:rgba(96,165,250,0.15);  color:#60a5fa; border:1px solid rgba(96,165,250,0.3);  }
+    .rs-green  { background:rgba(52,211,153,0.15);  color:#34d399; border:1px solid rgba(52,211,153,0.3);  }
+    .rs-ring-wrap { display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .rs-ring { position:relative; width:64px; height:64px; }
+    .rs-ring svg { position:absolute; top:0; left:0; transform:rotate(-90deg); }
+    .rs-ring-num { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700; }
+    .rs-ring-label { font-size:10px; color:var(--text-3); letter-spacing:.06em; }
+
+    /* ── ATTACK CHAIN ── */
+    .chain-container { position:relative; }
+    .chain-container::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0; bottom: 0;
+      width: 36px;
+      background: linear-gradient(to right, transparent, #131520);
+      pointer-events: none;
+      border-radius: 0 6px 6px 0;
+    }
+    .chain-wrap { display:flex; align-items:center; gap:0; overflow-x:auto; padding:4px 0; scrollbar-width:none; cursor:grab; }
+    .chain-wrap:active { cursor:grabbing; }
+    .chain-wrap::-webkit-scrollbar { display:none; }
+    .chain-node { display:flex; align-items:center; }
+    .chain-box { padding:5px 9px; border-radius:6px; font-size:10px; font-weight:600; white-space:nowrap; border:1px solid; }
+    .chain-box.past    { background:rgba(255,255,255,0.03); border-color:rgba(255,255,255,0.08); color:var(--text-3); }
+    .chain-box.current { background:rgba(167,139,250,0.15); border-color:rgba(167,139,250,0.4);  color:var(--purple-light); }
+    .chain-box.future  { background:rgba(248,113,113,0.08); border-color:rgba(248,113,113,0.25); color:var(--red); }
+    .chain-arrow { font-size:11px; color:var(--text-3); padding:0 3px; flex-shrink:0; }
+
+    /* ── LIVE SIM ── */
+    .live-toggle { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:6px 12px; font-size:12px; color:var(--text-2); cursor:pointer; transition:all .15s; user-select:none; }
+    .live-toggle:hover { background:rgba(255,255,255,0.09); color:var(--text); }
+    .live-toggle.active { background:rgba(52,211,153,0.1); border-color:rgba(52,211,153,0.3); color:var(--green); }
+    @keyframes flash-new { 0%{background:rgba(167,139,250,0.25)} 100%{background:transparent} }
+    .alert-row.flash-in { animation: flash-new 1.5s ease-out forwards; }
+    .toast { position:fixed; bottom:24px; right:24px; background:rgba(15,14,26,0.95); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 16px; font-size:12px; color:var(--text); z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,0.5); max-width:300px; animation:toastIn .3s ease; }
+    @keyframes toastIn { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .toast-title { font-weight:600; margin-bottom:3px; }
+    .toast-sub   { color:var(--text-3); font-size:11px; }
+
+    /* ── LEADERBOARD ── */
+    .lb-accuracy-ring { position:relative; width:120px; height:120px; margin:0 auto 16px; }
+    .lb-accuracy-ring svg { position:absolute; top:0; left:0; transform:rotate(-90deg); }
+    .lb-accuracy-num { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .lb-accuracy-pct { font-size:28px; font-weight:700; color:var(--purple-light); }
+    .lb-accuracy-lbl { font-size:10px; color:var(--text-3); letter-spacing:.06em; }
+    .lb-stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
+    .lb-stat { background:var(--card-bg); border:1px solid var(--card-border); border-radius:10px; padding:14px; text-align:center; }
+    .lb-stat-val { font-size:22px; font-weight:700; margin-bottom:4px; }
+    .lb-stat-lbl { font-size:11px; color:var(--text-3); }
+    .lb-log-item { padding:9px 14px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:12px; color:var(--text-2); display:flex; align-items:center; gap:8px; }
+    .lb-log-item:last-child { border-bottom:none; }
+
+    /* ── DARK/LIGHT MODE ── */
+    body { transition:background .3s, color .3s; }
+    .card, .stat-card, .detail-card, .analysis-box, .verdict-card, .hunt-output, .mitre-col { transition:background .3s, border-color .3s; }
+    body.light-mode { --bg:#f1f5f9; --card-bg:rgba(0,0,0,0.04); --card-border:rgba(0,0,0,0.09); --card-hover:rgba(0,0,0,0.07); --text:#0f172a; --text-2:#475569; --text-3:#94a3b8; }
+    body.light-mode .sidebar-nav { background:linear-gradient(180deg,#e2e8f0,#cbd5e1) !important; }
+    body.light-mode .topbar { background:rgba(241,245,249,0.9) !important; }
+    body.light-mode .footer { background:rgba(241,245,249,0.8) !important; }
+    body.light-mode .analysis-box, body.light-mode .detail-card { background:rgba(0,0,0,0.03) !important; }
+    .theme-btn { background:none; border:1px solid rgba(255,255,255,0.08); border-radius:8px; color:var(--text-2); cursor:pointer; font-size:16px; padding:5px 10px; transition:all .15s; }
+    .theme-btn:hover { background:rgba(255,255,255,0.08); color:var(--text); }
+    body.light-mode .theme-btn { border-color:rgba(0,0,0,0.12); }
+    body.light-mode .theme-btn:hover { background:rgba(0,0,0,0.06); }
+
+    .token-form p { margin-bottom: 12px; color: var(--text-2); font-size: 13px; }
+    .token-form input {
+      width: 100%;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+      box-sizing: border-box;
+    }
+    .token-form input::placeholder { color: var(--text-3); }
+    .token-form button {
+      background: var(--purple);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .token-form button:hover { background: var(--purple-light); }
+  </style>
+</head>
+<body>
+
+  <!-- ── SIDEBAR NAV ── -->
+  <nav class="sidebar-nav">
+    <div class="brand">
+      <div class="brand-name">SOC AI</div>
+      <div class="brand-sub">THREAT INTELLIGENCE PLATFORM</div>
+    </div>
+
+    <div class="nav-section-label">MAIN MENU</div>
+    <div class="nav-item active" onclick="switchView('dashboard',this)"><span class="nav-icon">⚡</span> Dashboard</div>
+    <div class="nav-item" onclick="switchView('overview',this)"><span class="nav-icon">📊</span> Overview</div>
+    <div class="nav-item" onclick="navAlerts(this)"><span class="nav-icon">🎯</span> Alerts <span class="nav-badge" id="nav-badge">0</span></div>
+    <div class="nav-item" onclick="switchView('mitre',this)"><span class="nav-icon">🗺️</span> MITRE Map</div>
+    <div class="nav-item" onclick="switchView('geography',this)"><span class="nav-icon">🌐</span> Geography</div>
+
+    <div class="nav-section-label" style="margin-top:16px">TOOLS</div>
+    <div class="nav-item" onclick="switchView('leaderboard',this)"><span class="nav-icon">🏆</span> Leaderboard</div>
+    <div class="nav-item" onclick="navAiAnalysis(this)"><span class="nav-icon">🤖</span> AI Analysis</div>
+    <div class="nav-item" onclick="switchView('threathunt',this)"><span class="nav-icon">🔍</span> Threat Hunt</div>
+
+    <div class="sidebar-nav-footer">
+      <div class="user-row">
+        <div class="user-avatar">S</div>
+        <div>
+          <div class="user-name">SOC Analyst</div>
+          <div class="user-role">Admin</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="search-box">
+        <span style="color:#475569">🔍</span>
+        <input type="text" placeholder="Search alerts..."/>
+      </div>
+      <div class="topbar-chip"><div class="live-dot"></div> LIVE FEED</div>
+      <div class="live-toggle" id="live-toggle" onclick="toggleLiveSim()">⏸ SIM OFF</div>
+      <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
+      <div class="topbar-chip">SESSION <span id="session-time" style="color:#a78bfa;margin-left:4px">00:00</span></div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- ── LEADERBOARD VIEW ── -->
+      <div id="view-leaderboard" style="display:none">
+        <div class="view-subtitle">Your session performance metrics. Resets on page refresh.</div>
+        <div id="lb-body"></div>
+      </div>
+
+      <!-- ── MITRE MAP VIEW ── -->
+      <div id="view-mitre" style="display:none">
+        <div class="view-subtitle">MITRE ATT&CK v14 · Techniques observed in today's alert feed are highlighted.</div>
+        <div class="mitre-wrap"><div class="mitre-grid" id="mitre-grid"></div></div>
+      </div>
+
+      <!-- ── GEOGRAPHY VIEW ── -->
+      <div id="view-geography" style="display:none">
+        <div class="view-subtitle">Source IP geolocation based on today's alert feed.</div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><div class="card-title-dot" style="background:#22d3ee"></div>Source IP Intelligence</div>
+          </div>
+          <div style="overflow-x:auto"><table class="geo-table" id="geo-table"></table></div>
+        </div>
+      </div>
+
+      <!-- ── THREAT HUNT VIEW ── -->
+      <div id="view-threathunt" style="display:none">
+        <div class="view-subtitle">Formulate a hunt hypothesis and let AI generate a structured hunting report against the current alert dataset.</div>
+        <div class="hunt-bar">
+          <input class="hunt-input" id="hunt-hypothesis" placeholder="e.g. Compromised internal host beaconing to C2 while conducting lateral movement…"/>
+          <button class="hunt-run-btn" id="hunt-run-btn" onclick="runHunt()">🔍 Run Hunt</button>
+        </div>
+        <div class="hunt-output" id="hunt-output">
+          <div class="hunt-placeholder">
+            <div style="font-size:32px">🔍</div>
+            <p>Enter a hunt hypothesis above and click Run Hunt to generate an AI-powered hunting report.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OVERVIEW VIEW ── -->
+      <div id="view-overview" style="display:none">
+        <div style="margin-bottom:20px;font-size:13px;color:var(--text-2)">Threat statistics and distribution for today's alert feed.</div>
+
+        <!-- ROW 1: full-width timeline -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <div class="card-title"><div class="card-title-dot" style="background:#a78bfa"></div>Alert Timeline · Last 7 Days</div>
+          </div>
+          <div style="padding:20px;height:280px;position:relative"><canvas id="chart-timeline"></canvas></div>
+        </div>
+
+        <!-- ROW 2: category donut + alert status -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;padding-bottom:20px">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><div class="card-title-dot" style="background:#34d399"></div>Alerts by Category</div>
+            </div>
+            <div style="padding:16px;height:260px;position:relative"><canvas id="chart-cat"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><div class="card-title-dot" style="background:#fbbf24"></div>Alert Status</div>
+            </div>
+            <div id="alert-status-body"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DASHBOARD VIEW ── -->
+      <div id="view-dashboard">
+
+      <!-- STAT CARDS -->
+      <div class="stats-row">
+        <div class="stat-card sc-red" onclick="statFilter('critical')">
+          <div class="stat-icon" style="background:rgba(248,113,113,0.15)">🚨</div>
+          <div>
+            <div class="stat-val" style="color:#f87171" id="cnt-critical">0</div>
+            <div class="stat-lbl">Critical Alerts</div>
+            <div class="stat-sub" style="color:#f87171">Active threats</div>
+          </div>
+        </div>
+        <div class="stat-card sc-orange" onclick="statFilter('high')">
+          <div class="stat-icon" style="background:rgba(251,146,60,0.15)">⚠️</div>
+          <div>
+            <div class="stat-val" style="color:#fb923c" id="cnt-high">0</div>
+            <div class="stat-lbl">High Severity</div>
+            <div class="stat-sub" style="color:#fb923c">Needs review</div>
+          </div>
+        </div>
+        <div class="stat-card sc-blue" onclick="statFilter('medium')">
+          <div class="stat-icon" style="background:rgba(96,165,250,0.15)">📡</div>
+          <div>
+            <div class="stat-val" style="color:#60a5fa" id="cnt-med">0</div>
+            <div class="stat-lbl">Medium Severity</div>
+            <div class="stat-sub" style="color:#60a5fa">Under watch</div>
+          </div>
+        </div>
+        <div class="stat-card sc-purple" onclick="statFilter('all')">
+          <div class="stat-icon" style="background:rgba(167,139,250,0.15)">📋</div>
+          <div>
+            <div class="stat-val" style="color:#a78bfa" id="cnt-total">0</div>
+            <div class="stat-lbl">Total Alerts</div>
+            <div class="stat-sub" style="color:#a78bfa">Today's feed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALERT FEED + ANALYSIS PANEL -->
+      <div class="grid-2" id="split-panel">
+
+        <!-- ALERT FEED -->
+        <div class="card" id="panel-feed">
+          <div class="card-header">
+            <div class="card-title">
+              <div class="card-title-dot" style="background:#f87171"></div>
+              Alert Feed
+            </div>
+            <div class="filter-tabs">
+              <button class="ftab active"  onclick="filterAlerts('all',this)">All</button>
+              <button class="ftab fc"      onclick="filterAlerts('critical',this)">Critical</button>
+              <button class="ftab fh"      onclick="filterAlerts('high',this)">High</button>
+              <button class="ftab fm"      onclick="filterAlerts('medium',this)">Medium</button>
+              <button class="ftab fl"      onclick="filterAlerts('low',this)">Low</button>
+            </div>
+          </div>
+          <div class="alert-list" id="alert-list"></div>
+        </div>
+
+        <!-- DRAG HANDLE -->
+        <div class="drag-handle" id="drag-handle"><span class="drag-grip">⠿</span></div>
+
+        <!-- AI ANALYSIS PANEL -->
+        <div class="card card-analysis" id="panel-analysis">
+          <div class="card-header">
+            <div class="card-title">
+              <div class="card-title-dot" style="background:#a78bfa"></div>
+              AI Analysis
+            </div>
+          </div>
+          <div id="sidebar-body" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden">
+            <div class="empty-state">
+              <div class="empty-ring">⚡</div>
+              <h3>No Alert Selected</h3>
+              <p>Select an alert from the feed to view details and run AI-powered threat analysis.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      </div><!-- end view-dashboard -->
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <span>MITRE ATT&CK v14 · GPT-4o Powered</span>
+      <span>SOC ANALYST AI · THREAT INTELLIGENCE PLATFORM</span>
+    </div>
+
+  </div>
+
+  <script>
+    // ── ALERT DATA ────────────────────────────────────────────────────────────────
+    const ALERTS = [
+      { id:'A-001', sev:'critical', title:'Ransomware C2 Beacon Detected',        src:'10.14.22.5',   dst:'185.220.101.47', rule:'RANSOM_C2_OUTBOUND',    proto:'HTTPS/443', count:34,   ts:'09:14:02', mitre:'T1071.001,T1041',       category:'C2 Communication', status:'NEW'  },
+      { id:'A-002', sev:'critical', title:'Lateral Movement via SMB - PsExec',    src:'10.14.22.5',   dst:'10.14.22.31',   rule:'LATERAL_PSEXEC',        proto:'SMB/445',   count:12,   ts:'09:15:44', mitre:'T1021.002,T1570',       category:'Lateral Movement', status:'NEW'  },
+      { id:'A-003', sev:'high',     title:'Brute Force Login Attempt - RDP',      src:'203.0.113.88', dst:'10.14.10.4',    rule:'RDP_BRUTE_FORCE',       proto:'RDP/3389',  count:412,  ts:'09:08:31', mitre:'T1110.001',             category:'Credential Access',status:'OPEN' },
+      { id:'A-004', sev:'high',     title:'DNS Tunneling Exfiltration Suspected', src:'10.14.33.12',  dst:'8.8.8.8',       rule:'DNS_TUNNEL_EXFIL',      proto:'DNS/53',    count:880,  ts:'09:02:17', mitre:'T1048.003,T1071.004',   category:'Exfiltration',     status:'OPEN' },
+      { id:'A-005', sev:'high',     title:'Mimikatz LSASS Dump Detected',         src:'10.14.22.31',  dst:'LOCAL',         rule:'CREDENTIAL_DUMP_LSASS', proto:'PROCESS',   count:1,    ts:'09:16:01', mitre:'T1003.001',             category:'Credential Access',status:'NEW'  },
+      { id:'A-006', sev:'medium',   title:'Suspicious PowerShell Encoded Cmd',    src:'10.14.11.9',   dst:'LOCAL',         rule:'PS_ENCODED_CMD',        proto:'PROCESS',   count:3,    ts:'08:55:09', mitre:'T1059.001',             category:'Execution',        status:'OPEN' },
+      { id:'A-007', sev:'medium',   title:'Tor Exit Node Communication',          src:'10.14.20.6',   dst:'198.98.54.105', rule:'TOR_EXIT_COMM',          proto:'TCP/9001',  count:7,    ts:'08:43:22', mitre:'T1090.003',             category:'Proxy',            status:'OPEN' },
+      { id:'A-008', sev:'medium',   title:'Unusual Scheduled Task Created',       src:'10.14.22.5',   dst:'LOCAL',         rule:'SCHTASK_PERSIST',       proto:'PROCESS',   count:2,    ts:'09:10:55', mitre:'T1053.005',             category:'Persistence',      status:'OPEN' },
+      { id:'A-009', sev:'low',      title:'Port Scan from External IP',           src:'45.33.32.156', dst:'10.14.0.0/16',  rule:'PORT_SCAN_EXT',          proto:'TCP',       count:1240, ts:'08:31:04', mitre:'T1046',                 category:'Discovery',        status:'OPEN' },
+      { id:'A-010', sev:'low',      title:'SSH Login from Unusual Country',       src:'197.220.4.18', dst:'10.14.5.2',     rule:'SSH_GEO_ANOMALY',        proto:'SSH/22',    count:1,    ts:'08:22:11', mitre:'T1078',                 category:'Initial Access',   status:'OPEN' }
+    ];
+
+    let selectedId = null, currentFilter = 'all', currentTier = 'T1';
+    const analysisCache = {};  // keyed by `${alertId}_${tier}`
+    const analystNotes  = {};  // keyed by alertId
+
+    // ── LEADERBOARD DATA ──────────────────────────────────────────────────────────
+    const LB = { triaged:0, tp:0, fp:0, analyses:0, confTotal:0, log:[] };
+
+    const getApiToken = () => sessionStorage.getItem('github_models_token');
+
+    // ── RISK SCORE ────────────────────────────────────────────────────────────────
+    const HIGH_DANGER_PREFIXES = ['T1003','T1059','T1071','T1021','T1041','T1048'];
+    function calcRisk(a) {
+      const base = { critical:40, high:30, medium:20, low:10 }[a.sev] || 10;
+      const countBonus = Math.min(Math.log10(Math.max(a.count,1)) * 10, 25);
+      let mitreBonus = 0;
+      a.mitre.split(',').forEach(t => {
+        t = t.trim();
+        mitreBonus += HIGH_DANGER_PREFIXES.some(p => t.startsWith(p)) ? 15 : 5;
+      });
+      return Math.min(Math.round(base + countBonus + mitreBonus), 100);
+    }
+    function rsClass(score) {
+      return score >= 80 ? 'rs-red' : score >= 60 ? 'rs-orange' : score >= 40 ? 'rs-blue' : 'rs-green';
+    }
+    function rsColor(score) {
+      return score >= 80 ? '#f87171' : score >= 60 ? '#fb923c' : score >= 40 ? '#60a5fa' : '#34d399';
+    }
+
+    // ── ATTACK CHAIN ─────────────────────────────────────────────────────────────
+    const KILL_CHAIN = ['Recon','Initial Access','Execution','Persistence','Priv Esc','Cred Access','Discovery','Lateral Move','C2','Exfiltration'];
+    const CATEGORY_STAGE = {
+      'C2 Communication':'C2', 'Lateral Movement':'Lateral Move',
+      'Credential Access':'Cred Access', 'Exfiltration':'Exfiltration',
+      'Execution':'Execution', 'Persistence':'Persistence',
+      'Discovery':'Discovery', 'Proxy':'C2', 'Initial Access':'Initial Access'
+    };
+    function buildChain(a) {
+      const currentStage = CATEGORY_STAGE[a.category] || 'C2';
+      const currentIdx   = KILL_CHAIN.indexOf(currentStage);
+      // Show a contextual window of 5 stages centered on current
+      const start = Math.max(0, Math.min(currentIdx - 2, KILL_CHAIN.length - 5));
+      const window = KILL_CHAIN.slice(start, start + 5);
+      return window.map((stage, i) => {
+        const globalIdx = start + i;
+        const cls = globalIdx < currentIdx ? 'past' : globalIdx === currentIdx ? 'current' : 'future';
+        const label = globalIdx === currentIdx ? `${stage} ◀` : stage;
+        return `<div class="chain-node">
+          ${i > 0 ? '<div class="chain-arrow">→</div>' : ''}
+          <div class="chain-box ${cls}">${label}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // counters
+    document.getElementById('cnt-critical').textContent = ALERTS.filter(a => a.sev==='critical').length;
+    document.getElementById('cnt-high').textContent     = ALERTS.filter(a => a.sev==='high').length;
+    document.getElementById('cnt-med').textContent      = ALERTS.filter(a => a.sev==='medium').length;
+    document.getElementById('cnt-total').textContent    = ALERTS.length;
+    document.getElementById('nav-badge').textContent    = ALERTS.filter(a => a.status==='NEW').length;
+
+    // session timer
+    const t0 = Date.now();
+    setInterval(() => {
+      const s = Math.floor((Date.now()-t0)/1000);
+      document.getElementById('session-time').textContent =
+        String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+    }, 1000);
+
+    // ── RENDER FEED ──────────────────────────────────────────────────────────────
+    function renderAlerts() {
+      const list = currentFilter==='all' ? ALERTS : ALERTS.filter(a=>a.sev===currentFilter);
+      const sevColor = { critical:'#f87171', high:'#fb923c', medium:'#60a5fa', low:'#34d399' };
+      document.getElementById('alert-list').innerHTML = list.map(a => `
+        <div class="alert-row${selectedId===a.id?' selected':''}${a.sev==='critical'?' crit-row':''}"
+             onclick="selectAlert('${a.id}')">
+          <div class="status-dot" style="background:${sevColor[a.sev]};box-shadow:0 0 5px ${sevColor[a.sev]}40"></div>
+          <span class="sev-pill sev-${a.sev}">${a.sev.toUpperCase()}</span>
+          <span class="rs-pill ${rsClass(calcRisk(a))}">RS ${calcRisk(a)}</span>
+          <div class="alert-info">
+            <div class="alert-title-text">${a.title}</div>
+            <div class="alert-meta-row">
+              <span>${a.src}</span><span class="meta-sep">▶</span>
+              <span>${a.dst}</span><span class="meta-sep">·</span>
+              <span>${a.rule}</span>
+            </div>
+          </div>
+          <div class="alert-time-badge">${a.ts}</div>
+        </div>
+      `).join('');
+    }
+
+    function filterAlerts(sev, btn) {
+      currentFilter = sev;
+      document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+      if (btn) {
+        btn.classList.add('active');
+      } else {
+        const idx = { all:0, critical:1, high:2, medium:3, low:4 }[sev] ?? 0;
+        const tabs = document.querySelectorAll('.ftab');
+        if (tabs[idx]) tabs[idx].classList.add('active');
+      }
+      renderAlerts();
+    }
+
+    function statFilter(sev) {
+      switchView('dashboard', document.querySelector('.nav-item[onclick*="dashboard"]'));
+      setTimeout(() => {
+        filterAlerts(sev, null);
+        document.getElementById('alert-list')?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+      }, 30);
+    }
+
+    function navAlerts(btn) {
+      switchView('dashboard', btn);
+      setTimeout(() => document.getElementById('alert-list')?.scrollIntoView({ behavior:'smooth', block:'nearest' }), 60);
+    }
+
+    function navAiAnalysis(btn) {
+      switchView('dashboard', btn);
+      setTimeout(() => document.getElementById('sidebar-body')?.scrollIntoView({ behavior:'smooth', block:'nearest' }), 60);
+    }
+
+    function selectAlert(id) {
+      selectedId = id;
+      LB.triaged++;
+      LB.log.unshift({ ts: new Date().toLocaleTimeString(), text: `Triaged ${id}` });
+      if (LB.log.length > 5) LB.log.pop();
+      renderAlerts();
+      renderSidebar(ALERTS.find(x=>x.id===id));
+    }
+
+    // ── RENDER SIDEBAR ────────────────────────────────────────────────────────────
+    function renderSidebar(a) {
+      const mitreHtml = a.mitre.split(',').map(m=>`<span class="mitre-tag">${m}</span>`).join('');
+      const statusCls = a.status==='NEW' ? 'st-new' : 'st-open';
+      const cacheKey  = `${a.id}_${currentTier}`;
+      const cached    = analysisCache[cacheKey];
+      const noteVal   = (analystNotes[a.id] || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      const score = calcRisk(a);
+      const rColor = rsColor(score);
+      const ringPct = score / 100;
+      const circumference = 2 * Math.PI * 26; // r=26
+      const dashOffset = circumference * (1 - ringPct);
+      const ringSvg = `<svg width="64" height="64" viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+        <circle cx="32" cy="32" r="26" fill="none" stroke="${rColor}" stroke-width="5"
+          stroke-dasharray="${circumference.toFixed(1)}" stroke-dashoffset="${dashOffset.toFixed(1)}"
+          stroke-linecap="round"/>
+      </svg>`;
+      const verdictSection = cached ? buildVerdictHtml(cached) : '';
+      const analysisContent = cached
+        ? `<div class="analysis-text">${cached.text}</div>`
+        : `<div class="analysis-placeholder">Select a tier and click "Run AI Analysis".</div>`;
+
+      document.getElementById('sidebar-body').innerHTML = `
+        <div class="sidebar-scroll">
+          <div class="detail-card">
+            <div class="detail-card-title">
+              <span>Alert Details</span>
+              <span class="detail-id">${a.id}</span>
+            </div>
+            <div class="detail-grid">
+              <div class="detail-cell">
+                <div class="cell-lbl">SOURCE IP</div>
+                <div class="cell-val ip">${a.src}</div>
+              </div>
+              <div class="detail-cell">
+                <div class="cell-lbl">DESTINATION</div>
+                <div class="cell-val ip">${a.dst}</div>
+              </div>
+              <div class="detail-cell">
+                <div class="cell-lbl">PROTOCOL</div>
+                <div class="cell-val">${a.proto}</div>
+              </div>
+              <div class="detail-cell">
+                <div class="cell-lbl">EVENT COUNT</div>
+                <div class="cell-val">${a.count.toLocaleString()}</div>
+              </div>
+              <div class="detail-cell">
+                <div class="cell-lbl">CATEGORY</div>
+                <div class="cell-val">${a.category}</div>
+              </div>
+              <div class="detail-cell">
+                <div class="cell-lbl">STATUS</div>
+                <div class="cell-val ${statusCls}">${a.status}</div>
+              </div>
+            </div>
+            <div class="cell-lbl" style="margin-bottom:6px">MITRE ATT&CK</div>
+            <div class="mitre-row">${mitreHtml}</div>
+            <div class="cell-lbl" style="margin-top:12px;margin-bottom:6px">ATTACK CHAIN</div>
+            <div class="chain-container"><div class="chain-wrap" id="chain-scroll">${buildChain(a)}</div></div>
+          </div>
+
+          <div>
+            <div class="cell-lbl" style="margin-bottom:6px">ANALYST TIER</div>
+            <div class="tier-toggle">
+              <button class="tier-btn${currentTier==='T1'?' active':''}" onclick="setTier('T1','${a.id}')">T1 · Triage</button>
+              <button class="tier-btn t2${currentTier==='T2'?' active':''}" onclick="setTier('T2','${a.id}')">T2 · Investigate</button>
+              <button class="tier-btn t3${currentTier==='T3'?' active':''}" onclick="setTier('T3','${a.id}')">T3 · Hunt</button>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <button class="analyze-btn" id="analyze-btn" onclick="runAnalysis('${a.id}')" style="flex:1">
+              <span>${cached ? '↺' : '⚡'}</span>
+              ${cached ? 'Re-analyze' : 'Run AI Analysis'}
+            </button>
+            <div class="rs-ring-wrap">
+              <div class="rs-ring">${ringSvg}<div class="rs-ring-num" style="color:${rColor}">${score}</div></div>
+              <div class="rs-ring-label">RISK</div>
+            </div>
+          </div>
+
+          ${verdictSection}
+
+          <div class="analysis-box" id="analysis-output">
+            <div class="analysis-box-header">AI Assessment · ${tierLabel(currentTier)}</div>
+            <div class="analysis-box-body">${analysisContent}</div>
+          </div>
+
+          <div class="notes-section">
+            <div class="notes-label">ANALYST NOTES</div>
+            <textarea class="notes-textarea" id="notes-field" placeholder="Add your observations, IOCs, or remediation steps...">${noteVal}</textarea>
+            <button class="save-note-btn" onclick="saveNote('${a.id}')">Save Note</button>
+            ${cached ? `<button class="save-note-btn" style="background:rgba(96,165,250,0.1);border-color:rgba(96,165,250,0.3);color:var(--blue)" onclick="exportReport('${a.id}')">⬇ Export Report</button>` : ''}
+          </div>
+        </div>
+      `;
+
+      if (cached) setTimeout(() => animateConfBar(cached.confidence), 60);
+    }
+
+    // ── AI ANALYSIS ───────────────────────────────────────────────────────────────
+    async function runAnalysis(id) {
+      const a      = ALERTS.find(x=>x.id===id);
+      const btn    = document.getElementById('analyze-btn');
+      const output = document.getElementById('analysis-output');
+      const tier   = currentTier;
+
+      btn.disabled = true;
+      btn.innerHTML = `<span>⋯</span> Analyzing…`;
+      output.innerHTML = `<div class="analysis-box-header">AI Assessment · ${tierLabel(tier)}</div>
+        <div class="analysis-box-body">
+          <div style="display:flex;align-items:center;gap:16px;padding:4px 0">
+            <div class="loading-dots" style="gap:6px">
+              <span></span><span></span><span></span>
+            </div>
+            <span class="loading-label">Processing threat data…</span>
+          </div>
+        </div>`;
+
+      if (!getApiToken()) {
+        output.innerHTML = `
+          <div class="analysis-box-header">Enter GitHub Models Token</div>
+          <div class="analysis-box-body token-form">
+            <p>Enter your GitHub Models API token to enable AI analysis. Get a free token at <a href="https://github.com/marketplace/models" target="_blank">github.com/marketplace/models</a></p>
+            <input type="password" id="token-input" placeholder="ghp_...">
+            <button onclick="submitToken('${id}')">Submit Token</button>
+          </div>
+        `;
+        btn.disabled = false;
+        btn.innerHTML = `<span>⚡</span> Run AI Analysis`;
+        return;
+      }
+
+      const alertContext =
+`Title: ${a.title}
+Severity: ${a.sev.toUpperCase()}
+Source IP: ${a.src} → Destination: ${a.dst}
+Rule: ${a.rule} | Protocol: ${a.proto} | Event Count: ${a.count}
+MITRE ATT&CK: ${a.mitre}
+Category: ${a.category} | Status: ${a.status}`;
+
+      const SYSTEM_PROMPTS = {
+        T1: `You are a Tier 1 SOC analyst performing rapid alert triage. Determine quickly if this is real or noise and state the immediate action. Be decisive. Narrative must be under 80 words.
+
+CRITICAL FORMATTING RULE: The very first line of your response must be raw JSON only — no markdown, no backticks, no code fences, no labels. Output the JSON object directly on a single line like this:
+{"verdict":"TRUE_POSITIVE","confidence":85,"justification":"One sentence reason."}
+
+Valid verdicts: TRUE_POSITIVE, FALSE_POSITIVE, LIKELY_FALSE_POSITIVE, NEEDS_INVESTIGATION
+Confidence 0-100 based on severity, event count, rule specificity, MITRE technique, and IP context.
+After the JSON line, write your triage narrative. Use **bold** for key terms.`,
+
+        T2: `You are a Tier 2 SOC analyst performing deep incident investigation. Cover: attack chain context, what the attacker likely did before and after this alert, lateral movement risk, affected assets, and recommended containment steps. Target ~150 words narrative.
+
+CRITICAL FORMATTING RULE: The very first line of your response must be raw JSON only — no markdown, no backticks, no code fences, no labels. Output the JSON object directly on a single line like this:
+{"verdict":"TRUE_POSITIVE","confidence":85,"justification":"One sentence reason."}
+
+Valid verdicts: TRUE_POSITIVE, FALSE_POSITIVE, LIKELY_FALSE_POSITIVE, NEEDS_INVESTIGATION
+Confidence 0-100 based on severity, event count, rule specificity, MITRE technique, and IP context.
+After the JSON line, write your investigation narrative. Use **bold** for key terms.`,
+
+        T3: `You are a Tier 3 threat hunter. Assume this alert is a signal, not the full story. Generate: a campaign hypothesis, what else to hunt in the environment, MITRE ATT&CK techniques to pivot on, and IOCs to search. Advanced analytical tone, ~180 words.
+
+CRITICAL FORMATTING RULE: The very first line of your response must be raw JSON only — no markdown, no backticks, no code fences, no labels. Output the JSON object directly on a single line like this:
+{"verdict":"TRUE_POSITIVE","confidence":85,"justification":"One sentence reason."}
+
+Valid verdicts: TRUE_POSITIVE, FALSE_POSITIVE, LIKELY_FALSE_POSITIVE, NEEDS_INVESTIGATION
+Confidence 0-100 based on severity, event count, rule specificity, MITRE technique, and IP context.
+After the JSON line, write your threat hunt output. Use **bold** for key terms.`
+      };
+
+      try {
+        const apiKey = getApiToken();
+
+        const res = await fetch('https://models.github.ai/inference/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${apiKey}` },
+          body: JSON.stringify({
+            model: 'openai/gpt-4o', max_tokens: 1200,
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPTS[tier] },
+              { role: 'user',   content: `Analyze this security alert:\n\n${alertContext}` }
+            ]
+          })
+        });
+
+        if (!res.ok) { const e=await res.json(); throw new Error(e.error?.message||`HTTP ${res.status}`); }
+
+        const data = await res.json();
+        // Strip all markdown code fences before processing
+        const raw  = data.choices[0].message.content
+          .replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+
+        // Defaults if parsing fails
+        let verdict = 'NEEDS_INVESTIGATION', confidence = 50, justification = 'Automatic verdict unavailable.';
+        let narrative = raw;
+
+        // Extract the first JSON object anywhere in the response
+        const jsonMatch = raw.match(/(\{[^}]+\})/);
+        if (jsonMatch) {
+          try {
+            const parsed  = JSON.parse(jsonMatch[1]);
+            verdict       = parsed.verdict       || verdict;
+            confidence    = typeof parsed.confidence === 'number' ? parsed.confidence : confidence;
+            justification = parsed.justification || justification;
+            // Remove the matched JSON block (and any surrounding whitespace) from the narrative
+            narrative     = raw.replace(jsonMatch[0], '').trim();
+          } catch(_) { /* silently fall back to defaults, narrative stays as raw minus the unparseable block */ }
+        }
+
+        const formattedText = narrative
+          .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+
+        analysisCache[`${id}_${tier}`] = { verdict, confidence, justification, text: formattedText };
+        LB.analyses++;
+        LB.confTotal += confidence;
+        if (verdict === 'TRUE_POSITIVE')  { LB.tp++; }
+        if (verdict === 'FALSE_POSITIVE') { LB.fp++; }
+        LB.log.unshift({ ts: new Date().toLocaleTimeString(), text: `${id} · ${tierLabel(tier)} · ${verdict.replace('_',' ')} ${confidence}%` });
+        if (LB.log.length > 5) LB.log.pop();
+        renderSidebar(a);
+
+      } catch(err) {
+        output.innerHTML = `<div class="analysis-box-header">AI Assessment · ${tierLabel(tier)}</div>
+          <div class="analysis-box-body" style="color:#f87171"><strong>Error:</strong> ${err.message}</div>`;
+        btn.disabled = false;
+        btn.innerHTML = `<span>⚡</span> Run AI Analysis`;
+      }
+    }
+
+    // ── TIER HELPERS ──────────────────────────────────────────────────────────────
+    function tierLabel(tier) {
+      return { T1:'Alert Triage', T2:'Deep Investigation', T3:'Threat Hunt' }[tier] || tier;
+    }
+
+    function setTier(tier, alertId) {
+      currentTier = tier;
+      renderSidebar(ALERTS.find(x => x.id === alertId));
+    }
+
+    // ── VERDICT CARD ─────────────────────────────────────────────────────────────
+    function buildVerdictHtml(c) {
+      const clsMap   = { TRUE_POSITIVE:'tp', FALSE_POSITIVE:'fp', LIKELY_FALSE_POSITIVE:'lfp', NEEDS_INVESTIGATION:'ni' };
+      const iconMap  = { TRUE_POSITIVE:'🔴', FALSE_POSITIVE:'🟢', LIKELY_FALSE_POSITIVE:'🟠', NEEDS_INVESTIGATION:'🔵' };
+      const labelMap = { TRUE_POSITIVE:'TRUE POSITIVE', FALSE_POSITIVE:'FALSE POSITIVE', LIKELY_FALSE_POSITIVE:'LIKELY FALSE POSITIVE', NEEDS_INVESTIGATION:'NEEDS INVESTIGATION' };
+      const k = clsMap[c.verdict] || 'ni';
+      return `
+        <div class="verdict-card ${k}">
+          <div class="verdict-top">
+            <div>
+              <div style="font-size:10px;color:var(--text-3);letter-spacing:.06em;margin-bottom:3px">VERDICT</div>
+              <div class="verdict-label ${k}">${iconMap[c.verdict]||'🔵'} ${labelMap[c.verdict]||c.verdict}</div>
+            </div>
+            <div class="verdict-conf ${k}">${c.confidence}%</div>
+          </div>
+          <div class="verdict-just">${c.justification}</div>
+        </div>
+        <div>
+          <div class="conf-bar-label">TRIAGE CONFIDENCE</div>
+          <div class="conf-bar-track"><div class="conf-bar-fill" id="conf-bar-fill"></div></div>
+        </div>`;
+    }
+
+    function animateConfBar(pct) {
+      const fill = document.getElementById('conf-bar-fill');
+      if (!fill) return;
+      const color = pct > 75 ? '#f87171' : pct > 50 ? '#fb923c' : pct > 25 ? '#60a5fa' : '#34d399';
+      fill.style.background  = color;
+      fill.style.boxShadow   = `0 0 8px ${color}60`;
+      requestAnimationFrame(() => { fill.style.width = pct + '%'; });
+    }
+
+    // ── ANALYST NOTES ─────────────────────────────────────────────────────────────
+    function saveNote(alertId) {
+      const ta = document.getElementById('notes-field');
+      if (!ta) return;
+      analystNotes[alertId] = ta.value;
+      const btn = document.querySelector('.save-note-btn');
+      if (btn) {
+        btn.textContent = '✓ Saved';
+        btn.classList.add('saved');
+        setTimeout(() => { btn.textContent = 'Save Note'; btn.classList.remove('saved'); }, 1500);
+      }
+    }
+
+    // ── LIVE ALERT SIMULATION ─────────────────────────────────────────────────────
+    let liveSimInterval = null;
+    let liveSimCounter  = 0;
+    const SIM_TEMPLATES = [
+      { title:'Suspicious LDAP Enumeration Detected',  sev:'high',     rule:'LDAP_ENUM',         proto:'LDAP/389',  mitre:'T1018',        category:'Discovery'        },
+      { title:'New Admin Account Created via Net User', sev:'critical', rule:'NET_USER_ADMIN',     proto:'PROCESS',   mitre:'T1136.001',    category:'Persistence'      },
+      { title:'SMB Relay Attack Attempt',               sev:'critical', rule:'SMB_RELAY',         proto:'SMB/445',   mitre:'T1557.001',    category:'Credential Access'},
+      { title:'Cobalt Strike Beacon Pattern Detected',  sev:'critical', rule:'CS_BEACON',         proto:'HTTPS/443', mitre:'T1071.001',    category:'C2 Communication' },
+      { title:'Kerberoasting Activity Detected',        sev:'high',     rule:'KERBEROAST',        proto:'KRB/88',    mitre:'T1558.003',    category:'Credential Access'},
+      { title:'Outbound Traffic to Threat Feed IP',     sev:'high',     rule:'THREAT_INTEL_HIT',  proto:'TCP/80',    mitre:'T1071',        category:'C2 Communication' },
+      { title:'Registry Run Key Persistence Added',     sev:'medium',   rule:'REG_RUN_PERSIST',   proto:'PROCESS',   mitre:'T1547.001',    category:'Persistence'      },
+      { title:'WMI Remote Execution Detected',          sev:'high',     rule:'WMI_REMOTE_EXEC',   proto:'DCOM/135',  mitre:'T1047',        category:'Execution'        },
+    ];
+    const SIM_SRCS = ['10.14.55.12','10.14.18.3','192.168.1.44','10.14.7.201','172.16.0.99'];
+    const SIM_DSTS = ['185.220.101.50','10.14.22.100','198.51.100.22','45.33.44.55','203.0.113.5'];
+
+    function toggleLiveSim() {
+      const btn = document.getElementById('live-toggle');
+      if (liveSimInterval) {
+        clearInterval(liveSimInterval);
+        liveSimInterval = null;
+        btn.textContent = '⏸ SIM OFF';
+        btn.classList.remove('active');
+      } else {
+        liveSimInterval = setInterval(injectAlert, 30000);
+        btn.textContent = '▶ SIM ON';
+        btn.classList.add('active');
+        showToast('Live simulation started', 'New alerts every 30 seconds');
+      }
+    }
+
+    function injectAlert() {
+      const tpl = SIM_TEMPLATES[Math.floor(Math.random() * SIM_TEMPLATES.length)];
+      const now = new Date();
+      const ts  = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+      liveSimCounter++;
+      const newAlert = {
+        id:       `S-${String(liveSimCounter).padStart(3,'0')}`,
+        sev:      tpl.sev,
+        title:    tpl.title,
+        src:      SIM_SRCS[Math.floor(Math.random() * SIM_SRCS.length)],
+        dst:      SIM_DSTS[Math.floor(Math.random() * SIM_DSTS.length)],
+        rule:     tpl.rule,
+        proto:    tpl.proto,
+        count:    Math.floor(Math.random() * 50) + 1,
+        ts,
+        mitre:    tpl.mitre,
+        category: tpl.category,
+        status:   'NEW'
+      };
+      ALERTS.unshift(newAlert);
+      document.getElementById('cnt-critical').textContent = ALERTS.filter(a=>a.sev==='critical').length;
+      document.getElementById('cnt-high').textContent     = ALERTS.filter(a=>a.sev==='high').length;
+      document.getElementById('cnt-med').textContent      = ALERTS.filter(a=>a.sev==='medium').length;
+      document.getElementById('cnt-total').textContent    = ALERTS.length;
+      document.getElementById('nav-badge').textContent    = ALERTS.filter(a=>a.status==='NEW').length;
+      renderAlerts();
+      // Flash the first row
+      setTimeout(() => {
+        const rows = document.querySelectorAll('.alert-row');
+        if (rows[0]) { rows[0].classList.add('flash-in'); setTimeout(()=>rows[0].classList.remove('flash-in'), 1500); }
+      }, 50);
+      showToast('New alert detected', newAlert.title);
+    }
+
+    function showToast(title, sub) {
+      const existing = document.querySelector('.toast');
+      if (existing) existing.remove();
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.innerHTML = `<div class="toast-title">${title}</div><div class="toast-sub">${sub}</div>`;
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.transition='opacity .4s'; t.style.opacity='0'; setTimeout(()=>t.remove(), 400); }, 4000);
+    }
+
+    // ── LEADERBOARD ───────────────────────────────────────────────────────────────
+    function renderLeaderboard() {
+      const body = document.getElementById('lb-body');
+      if (!body) return;
+      const total    = LB.tp + LB.fp;
+      const accuracy = total > 0 ? Math.round(LB.tp / total * 100) : 0;
+      const avgConf  = LB.analyses > 0 ? Math.round(LB.confTotal / LB.analyses) : 0;
+      const circ     = 2 * Math.PI * 50;
+      const dash     = circ * (accuracy / 100);
+
+      const sessionEl = document.getElementById('session-time');
+      const sessionVal = sessionEl ? sessionEl.textContent : '00:00';
+
+      const logHtml = LB.log.length
+        ? LB.log.map(e => `<div class="lb-log-item"><span style="color:var(--text-3);font-size:11px">${e.ts}</span>${e.text}</div>`).join('')
+        : '<div class="lb-log-item" style="color:var(--text-3)">No activity yet. Start triaging alerts.</div>';
+
+      body.innerHTML = `
+        <div class="lb-accuracy-ring">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#a78bfa" stroke-width="8"
+              stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${(circ - dash).toFixed(1)}"
+              stroke-linecap="round" transform="rotate(-90 60 60)"/>
+          </svg>
+          <div class="lb-accuracy-num">
+            <div class="lb-accuracy-pct">${accuracy}%</div>
+            <div class="lb-accuracy-lbl">ACCURACY</div>
+          </div>
+        </div>
+        <div class="lb-stat-grid">
+          <div class="lb-stat"><div class="lb-stat-val" style="color:var(--purple-light)">${LB.triaged}</div><div class="lb-stat-lbl">Alerts Triaged</div></div>
+          <div class="lb-stat"><div class="lb-stat-val" style="color:var(--red)">${LB.tp}</div><div class="lb-stat-lbl">True Positives</div></div>
+          <div class="lb-stat"><div class="lb-stat-val" style="color:var(--green)">${LB.fp}</div><div class="lb-stat-lbl">False Positives</div></div>
+          <div class="lb-stat"><div class="lb-stat-val" style="color:var(--blue)">${LB.analyses}</div><div class="lb-stat-lbl">AI Analyses Run</div></div>
+          <div class="lb-stat"><div class="lb-stat-val" style="color:var(--amber)">${avgConf}%</div><div class="lb-stat-lbl">Avg Confidence</div></div>
+          <div class="lb-stat"><div class="lb-stat-val" style="color:var(--cyan)">${sessionVal}</div><div class="lb-stat-lbl">Session Time</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title"><div class="card-title-dot" style="background:#a78bfa"></div>Today's Activity</div></div>
+          <div>${logHtml}</div>
+        </div>`;
+    }
+
+    // ── INCIDENT REPORT EXPORT ────────────────────────────────────────────────────
+    function exportReport(alertId) {
+      const a        = ALERTS.find(x => x.id === alertId);
+      const cacheKey = `${alertId}_${currentTier}`;
+      const cached   = analysisCache[cacheKey];
+      const note     = analystNotes[alertId] || '';
+      const score    = calcRisk(a);
+      const rColor   = score >= 80 ? '#f87171' : score >= 60 ? '#fb923c' : score >= 40 ? '#60a5fa' : '#34d399';
+      const now      = new Date();
+      const dateStr  = now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+      const timeStr  = now.toLocaleTimeString();
+      const ts       = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+
+      const chainStage = CATEGORY_STAGE[a.category] || 'Unknown';
+      const chainText  = KILL_CHAIN.join(' → ').replace(chainStage, `[ ${chainStage} ◀ ]`);
+
+      let verdictBlock = '';
+      if (cached) {
+        const vColors = { TRUE_POSITIVE:'#f87171', FALSE_POSITIVE:'#34d399', LIKELY_FALSE_POSITIVE:'#fb923c', NEEDS_INVESTIGATION:'#a78bfa' };
+        const vLabels = { TRUE_POSITIVE:'TRUE POSITIVE', FALSE_POSITIVE:'FALSE POSITIVE', LIKELY_FALSE_POSITIVE:'LIKELY FALSE POSITIVE', NEEDS_INVESTIGATION:'NEEDS INVESTIGATION' };
+        const vc = vColors[cached.verdict] || '#a78bfa';
+        verdictBlock = `<div style="background:${vc}18;border:1px solid ${vc}44;border-radius:8px;padding:16px;margin-bottom:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:11px;color:#94a3b8;margin-bottom:4px">VERDICT</div>
+            <div style="font-size:15px;font-weight:700;color:${vc}">${vLabels[cached.verdict]||cached.verdict}</div></div>
+            <div style="font-size:32px;font-weight:700;color:${vc}">${cached.confidence}%</div>
+          </div>
+          <div style="margin-top:8px;font-size:13px;color:#94a3b8">${cached.justification}</div>
+        </div>`;
+      }
+
+      const assessmentHtml = cached
+        ? `<div style="font-size:13px;line-height:1.8;color:#cbd5e1">${cached.text}</div>`
+        : '<div style="color:#475569;font-style:italic">No AI analysis has been run for this alert.</div>';
+
+      const noteHtml = note
+        ? `<h2 style="font-size:13px;font-weight:700;letter-spacing:.08em;color:#64748b;margin:24px 0 12px">ANALYST NOTES</h2><div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:14px;font-size:13px;color:#94a3b8;white-space:pre-wrap">${note}</div>`
+        : '';
+
+      const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+<title>Incident Report — ${a.id}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0f0e1a;color:#e2e8f0;font-family:Inter,system-ui,sans-serif;padding:40px;max-width:860px;margin:0 auto}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,0.08)}
+  .brand{font-size:22px;font-weight:700;background:linear-gradient(135deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .report-type{font-size:11px;color:#475569;letter-spacing:.1em;margin-top:4px}
+  .meta-right{text-align:right;font-size:12px;color:#475569}
+  .meta-right strong{color:#94a3b8;display:block;margin-bottom:2px}
+  h2{font-size:11px;font-weight:700;letter-spacing:.08em;color:#64748b;margin:24px 0 12px;text-transform:uppercase}
+  table{width:100%;border-collapse:collapse}
+  td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px}
+  td:first-child{color:#475569;width:160px;font-size:11px;letter-spacing:.04em}
+  .chain{font-size:12px;color:#94a3b8;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:12px 16px;line-height:1.8}
+  .footer{margin-top:40px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;font-size:11px;color:#475569}
+</style></head><body>
+<div class="header">
+  <div><div class="brand">SOC Analyst AI</div><div class="report-type">INCIDENT REPORT</div></div>
+  <div class="meta-right"><strong>Alert ID</strong>${a.id}<strong style="margin-top:8px">Generated</strong>${dateStr} · ${timeStr}</div>
+</div>
+<h2>Alert Metadata</h2>
+<table>
+  <tr><td>TITLE</td><td>${a.title}</td></tr>
+  <tr><td>SEVERITY</td><td>${a.sev.toUpperCase()}</td></tr>
+  <tr><td>RISK SCORE</td><td><span style="color:${rColor};font-weight:700">${score}/100</span></td></tr>
+  <tr><td>SOURCE IP</td><td style="font-family:monospace;color:#22d3ee">${a.src}</td></tr>
+  <tr><td>DESTINATION</td><td style="font-family:monospace;color:#22d3ee">${a.dst}</td></tr>
+  <tr><td>RULE</td><td>${a.rule}</td></tr>
+  <tr><td>PROTOCOL</td><td>${a.proto}</td></tr>
+  <tr><td>EVENT COUNT</td><td>${a.count.toLocaleString()}</td></tr>
+  <tr><td>MITRE ATT&amp;CK</td><td>${a.mitre}</td></tr>
+  <tr><td>CATEGORY</td><td>${a.category}</td></tr>
+  <tr><td>STATUS</td><td>${a.status}</td></tr>
+  <tr><td>TIMESTAMP</td><td>${a.ts}</td></tr>
+</table>
+<h2>Attack Chain</h2>
+<div class="chain">${chainText}</div>
+${verdictBlock ? '<h2>AI Verdict</h2>' + verdictBlock : ''}
+<h2>AI Assessment · ${tierLabel(currentTier)}</h2>
+${assessmentHtml}
+${noteHtml}
+<div class="footer">
+  <span>SOC ANALYST AI · THREAT INTELLIGENCE PLATFORM</span>
+  <span>CONFIDENTIAL — FOR INTERNAL USE ONLY</span>
+</div>
+</body></html>`;
+
+      const blob = new Blob([html], { type:'text/html' });
+      const url  = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href     = url;
+      link.download = `Incident-Report-${alertId}-${ts}.html`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ── DARK / LIGHT MODE ─────────────────────────────────────────────────────────
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('light-mode');
+      document.getElementById('theme-btn').textContent = isLight ? '☀️' : '🌙';
+      localStorage.setItem('soc_theme', isLight ? 'light' : 'dark');
+    }
+    // Apply saved theme on load
+    if (localStorage.getItem('soc_theme') === 'light') {
+      document.body.classList.add('light-mode');
+      document.getElementById('theme-btn').textContent = '☀️';
+    }
+
+    // ── CHARTS ────────────────────────────────────────────────────────────────────
+    const chartDefaults = {
+      plugins: { legend: { labels: { color:'#94a3b8', font:{size:11} } } },
+      scales:  { x:{ ticks:{color:'#475569'}, grid:{color:'rgba(255,255,255,0.04)'} },
+                 y:{ ticks:{color:'#475569'}, grid:{color:'rgba(255,255,255,0.04)'} } }
+    };
+
+
+    const cats = [...new Set(ALERTS.map(a=>a.category))];
+    const chartCat = new Chart(document.getElementById('chart-cat'), {
+      type: 'doughnut',
+      data: {
+        labels: cats,
+        datasets:[{ data: cats.map(c=>ALERTS.filter(a=>a.category===c).length),
+          backgroundColor:['rgba(167,139,250,0.6)','rgba(96,165,250,0.6)','rgba(52,211,153,0.6)','rgba(251,146,60,0.6)','rgba(248,113,113,0.6)','rgba(251,191,36,0.6)','rgba(34,211,238,0.6)'],
+          borderWidth: 0
+        }]
+      },
+      options: { maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{color:'#94a3b8',font:{size:11},boxWidth:10,padding:8} } }, cutout:'65%' }
+    });
+
+    const chartTimeline = new Chart(document.getElementById('chart-timeline'), {
+      type: 'line',
+      data: {
+        labels: ['Mar 21','Mar 22','Mar 23','Mar 24','Mar 25','Mar 26','Mar 27'],
+        datasets: [
+          {
+            label: 'Critical',
+            data: [1, 2, 6, 4, 3, 2, 2],
+            borderColor: '#f87171',
+            pointBackgroundColor: '#f87171',
+            borderWidth: 2, tension: 0.4, fill: false,
+            pointRadius: 4, pointHoverRadius: 7
+          },
+          {
+            label: 'High',
+            data: [3, 4, 5, 6, 5, 4, 3],
+            borderColor: '#fb923c',
+            pointBackgroundColor: '#fb923c',
+            borderWidth: 2, tension: 0.4, fill: false,
+            pointRadius: 4, pointHoverRadius: 7
+          },
+          {
+            label: 'Medium',
+            data: [5, 4, 7, 5, 6, 4, 3],
+            borderColor: '#60a5fa',
+            pointBackgroundColor: '#60a5fa',
+            borderWidth: 2, tension: 0.4, fill: false,
+            pointRadius: 4, pointHoverRadius: 7
+          },
+          {
+            label: 'Low',
+            data: [2, 3, 2, 3, 2, 2, 2],
+            borderColor: '#34d399',
+            pointBackgroundColor: '#34d399',
+            borderWidth: 2, tension: 0.4, fill: false,
+            pointRadius: 4, pointHoverRadius: 7
+          }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            align: 'end',
+            labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12, padding: 16, usePointStyle: true }
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: 'rgba(15,14,26,0.95)',
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1,
+            titleColor: '#e2e8f0',
+            bodyColor: '#94a3b8',
+            padding: 10,
+            bodySpacing: 6
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#475569', font: { size: 11 } },
+            grid:  { color: 'rgba(255,255,255,0.05)' },
+            border:{ display: false }
+          },
+          y: {
+            ticks: { color: '#475569', font: { size: 11 }, stepSize: 2 },
+            grid:  { color: 'rgba(255,255,255,0.05)' },
+            border:{ display: false },
+            min: 0
+          }
+        }
+      }
+    });
+
+    // ── ALERT STATUS CARD ─────────────────────────────────────────────────────────
+    function renderAlertStatus() {
+      const body = document.getElementById('alert-status-body');
+      if (!body) return;
+
+      const total   = ALERTS.length;
+      const newCnt  = ALERTS.filter(a => a.status === 'NEW').length;
+      const openCnt = total - newCnt;
+      const newPct  = Math.round(newCnt  / total * 100);
+      const openPct = 100 - newPct;
+
+      const catCounts = {};
+      ALERTS.forEach(a => { catCounts[a.category] = (catCounts[a.category] || 0) + 1; });
+      const topCats = Object.entries(catCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      const maxCnt  = topCats[0]?.[1] || 1;
+
+      const CAT_COLORS = {
+        'C2 Communication':'#f87171', 'Lateral Movement':'#fb923c',
+        'Credential Access':'#fbbf24', 'Exfiltration':'#a78bfa',
+        'Execution':'#60a5fa', 'Discovery':'#22d3ee',
+        'Persistence':'#34d399', 'Proxy':'#94a3b8', 'Initial Access':'#34d399'
+      };
+
+      const topCatHtml = topCats.map(([cat, cnt]) => {
+        const barPct = Math.round(cnt / maxCnt * 100);
+        const color  = CAT_COLORS[cat] || '#94a3b8';
+        return `<div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+            <span style="font-size:12px;color:var(--text-2)">${cat}</span>
+            <span style="font-size:11px;color:var(--text-3)">${cnt} alert${cnt > 1 ? 's' : ''}</span>
+          </div>
+          <div style="height:4px;border-radius:2px;background:rgba(255,255,255,0.06)">
+            <div style="height:100%;width:${barPct}%;border-radius:2px;background:${color};transition:width .8s ease"></div>
+          </div>
+        </div>`;
+      }).join('');
+
+      body.innerHTML = `
+        <div style="padding:18px 18px 6px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-size:12px;color:var(--red)">🔴 NEW &nbsp;<strong>${newCnt}</strong> <span style="color:var(--text-3)">(${newPct}%)</span></span>
+            <span style="font-size:12px;color:var(--amber)">🟡 OPEN &nbsp;<strong>${openCnt}</strong> <span style="color:var(--text-3)">(${openPct}%)</span></span>
+          </div>
+          <div style="height:10px;border-radius:5px;overflow:hidden;display:flex;margin-bottom:20px">
+            <div style="width:${newPct}%;background:var(--red);transition:width .8s ease"></div>
+            <div style="flex:1;background:var(--amber)"></div>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.05);padding-top:16px">
+            <div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.08em;margin-bottom:14px">TOP CATEGORIES</div>
+            ${topCatHtml}
+          </div>
+        </div>`;
+    }
+
+    // ── VIEW SWITCHER ─────────────────────────────────────────────────────────────
+    const VIEW_TITLES = { dashboard:'Dashboard', overview:'Overview', leaderboard:'Analyst Leaderboard', mitre:'MITRE ATT&CK Map', geography:'Geography', threathunt:'Threat Hunt' };
+    const ALL_VIEWS   = ['dashboard','overview','leaderboard','mitre','geography','threathunt'];
+
+    function switchView(view, btn) {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      ALL_VIEWS.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        if (el) el.style.display = v === view ? 'block' : 'none';
+      });
+      document.getElementById('topbar-title').textContent = VIEW_TITLES[view] || view;
+      if (view === 'overview')    { chartCat.update(); chartTimeline.update(); renderAlertStatus(); }
+      if (view === 'leaderboard') renderLeaderboard();
+      if (view === 'mitre')     renderMitre();
+      if (view === 'geography') renderGeography();
+    }
+
+    // ── MITRE MAP ────────────────────────────────────────────────────────────────
+    const TACTICS = [
+      { key:'recon',    label:'Reconnaissance',    color:'#94a3b8' },
+      { key:'initial',  label:'Initial Access',    color:'#34d399' },
+      { key:'exec',     label:'Execution',         color:'#60a5fa' },
+      { key:'persist',  label:'Persistence',       color:'#a78bfa' },
+      { key:'privesc',  label:'Privilege Esc',     color:'#f472b6' },
+      { key:'devasion', label:'Defense Evasion',   color:'#fbbf24' },
+      { key:'cred',     label:'Credential Access', color:'#fb923c' },
+      { key:'discovery',label:'Discovery',         color:'#22d3ee' },
+      { key:'lateral',  label:'Lateral Movement',  color:'#f87171' },
+      { key:'c2',       label:'Command & Control', color:'#f87171' },
+      { key:'exfil',    label:'Exfiltration',      color:'#f87171' },
+    ];
+
+    const TECHNIQUE_MAP = {
+      'T1078':     { tactic:'initial',   name:'Valid Accounts'        },
+      'T1059.001': { tactic:'exec',      name:'PowerShell'            },
+      'T1053.005': { tactic:'persist',   name:'Scheduled Task'        },
+      'T1110.001': { tactic:'cred',      name:'Brute Force: Pwd'      },
+      'T1003.001': { tactic:'cred',      name:'LSASS Dump'            },
+      'T1046':     { tactic:'discovery', name:'Net Svc Scan'          },
+      'T1021.002': { tactic:'lateral',   name:'SMB/PsExec'            },
+      'T1570':     { tactic:'lateral',   name:'Lateral Tool Xfer'     },
+      'T1071.001': { tactic:'c2',        name:'Web Protocol'          },
+      'T1071.004': { tactic:'c2',        name:'DNS Protocol'          },
+      'T1041':     { tactic:'c2',        name:'Exfil Over C2 Chan'    },
+      'T1090.003': { tactic:'c2',        name:'Tor/Multi-hop Proxy'   },
+      'T1048.003': { tactic:'exfil',     name:'DNS Exfiltration'      },
+    };
+
+    function renderMitre() {
+      const hitTechniques = new Set(ALERTS.flatMap(a => a.mitre.split(',')));
+      const tacticMap = {};
+      TACTICS.forEach(t => { tacticMap[t.key] = []; });
+      hitTechniques.forEach(tid => {
+        const info = TECHNIQUE_MAP[tid.trim()];
+        if (info && tacticMap[info.tactic]) tacticMap[info.tactic].push({ tid: tid.trim(), name: info.name });
+      });
+
+      const grid = document.getElementById('mitre-grid');
+      if (!grid) return;
+      grid.innerHTML = TACTICS.map(t => {
+        const techs = tacticMap[t.key] || [];
+        const techHtml = techs.length
+          ? techs.map(tech => `<div class="mitre-tech" style="background:${t.color}22;color:${t.color};border:1px solid ${t.color}44"><div style="font-size:9px;opacity:.7;margin-bottom:2px">${tech.tid}</div>${tech.name}</div>`).join('')
+          : `<div class="mitre-empty">No activity</div>`;
+        return `<div class="mitre-col">
+          <div class="mitre-col-head" style="color:${t.color}">${t.label}</div>
+          ${techHtml}
+        </div>`;
+      }).join('');
+    }
+
+    // ── GEOGRAPHY ─────────────────────────────────────────────────────────────────
+    const GEO_DATA = {
+      '10.14.22.5':   { flag:'🏢', region:'Internal · Corporate LAN',    asn:'CORP-NET'     },
+      '10.14.22.31':  { flag:'🏢', region:'Internal · Corporate LAN',    asn:'CORP-NET'     },
+      '10.14.10.4':   { flag:'🏢', region:'Internal · DMZ',              asn:'CORP-NET'     },
+      '10.14.33.12':  { flag:'🏢', region:'Internal · Corporate LAN',    asn:'CORP-NET'     },
+      '10.14.11.9':   { flag:'🏢', region:'Internal · Corporate LAN',    asn:'CORP-NET'     },
+      '10.14.20.6':   { flag:'🏢', region:'Internal · Corporate LAN',    asn:'CORP-NET'     },
+      '10.14.5.2':    { flag:'🏢', region:'Internal · Server VLAN',      asn:'CORP-NET'     },
+      '185.220.101.47':{ flag:'🇳🇱', region:'Netherlands · Amsterdam',   asn:'Tor Exit Node' },
+      '203.0.113.88': { flag:'🇷🇺', region:'Russia · Moscow',            asn:'AS8342 RTCOMM' },
+      '8.8.8.8':      { flag:'🇺🇸', region:'United States · Mountain View',asn:'AS15169 Google' },
+      '198.98.54.105':{ flag:'🇺🇸', region:'United States · Chicago',    asn:'Tor Exit Node' },
+      '45.33.32.156': { flag:'🇺🇸', region:'United States · Dallas',     asn:'AS63949 Akamai' },
+      '197.220.4.18': { flag:'🇳🇬', region:'Nigeria · Lagos',            asn:'AS29465 MTN'  },
+    };
+
+    function renderGeography() {
+      const table = document.getElementById('geo-table');
+      if (!table) return;
+      const sevColor = { critical:'#f87171', high:'#fb923c', medium:'#60a5fa', low:'#34d399' };
+      const rows = ALERTS.map(a => {
+        const geo = GEO_DATA[a.src] || { flag:'🌐', region:'Unknown', asn:'—' };
+        return `<tr>
+          <td><span class="sev-pill sev-${a.sev}">${a.sev.toUpperCase()}</span></td>
+          <td style="color:var(--cyan);font-family:monospace">${a.src}</td>
+          <td><div class="geo-region"><span>${geo.flag}</span><span>${geo.region}</span></div></td>
+          <td style="color:var(--text-3);font-size:11px">${geo.asn}</td>
+          <td style="color:var(--text-2)">${a.title}</td>
+        </tr>`;
+      }).join('');
+      table.innerHTML = `<thead><tr>
+        <th>SEV</th><th>SOURCE IP</th><th>REGION</th><th>ASN / ORG</th><th>ALERT</th>
+      </tr></thead><tbody>${rows}</tbody>`;
+    }
+
+    // ── THREAT HUNT ───────────────────────────────────────────────────────────────
+    async function runHunt() {
+      const hypothesis = document.getElementById('hunt-hypothesis')?.value.trim();
+      if (!hypothesis) { document.getElementById('hunt-hypothesis')?.focus(); return; }
+      const btn    = document.getElementById('hunt-run-btn');
+      const output = document.getElementById('hunt-output');
+
+      btn.disabled = true;
+      btn.textContent = '⋯ Hunting…';
+      output.innerHTML = `<div class="hunt-section">
+        <div class="hunt-section-body">
+          <div class="loading-dots"><div class="loading-dots-inner"><span></span><span></span><span></span></div><span class="loading-label">Running AI threat hunt…</span></div>
+        </div>
+      </div>`;
+
+      if (!getApiToken()) {
+        output.innerHTML = `
+          <div class="hunt-section">
+            <div class="hunt-section-body token-form">
+              <p>Enter your GitHub Models API token to enable AI analysis. Get a free token at <a href="https://github.com/marketplace/models" target="_blank">github.com/marketplace/models</a></p>
+              <input type="password" id="token-input-hunt" placeholder="ghp_...">
+              <button onclick="submitTokenHunt()">Submit Token</button>
+            </div>
+          </div>
+        `;
+        btn.disabled = false;
+        btn.textContent = '🔍 Run Hunt';
+        return;
+      }
+
+      const alertSummary = ALERTS.map(a =>
+        `[${a.id}] ${a.sev.toUpperCase()} · ${a.title} | ${a.src}→${a.dst} | ${a.rule} | MITRE:${a.mitre}`
+      ).join('\n');
+
+      const systemPrompt = `You are an elite threat hunter. Given a hunt hypothesis and a SIEM alert dataset, produce a structured hunting report.
+
+Return your response in exactly this format with these four section headers on their own lines:
+## HYPOTHESIS ASSESSMENT
+## PIVOT POINTS
+## SIEM QUERIES
+## IOCs
+
+Under each header write the relevant content. Be specific, technical, and actionable. Use **bold** for key terms. Under SIEM QUERIES provide 2-3 realistic query strings (Splunk or KQL style). Under IOCs list specific IP addresses, domains, hashes, or patterns from the data.`;
+
+      const userMsg = `Hunt Hypothesis: ${hypothesis}\n\nAlert Dataset:\n${alertSummary}`;
+
+      try {
+        const apiKey = getApiToken();
+
+        const res = await fetch('https://models.github.ai/inference/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${apiKey}` },
+          body: JSON.stringify({
+            model: 'openai/gpt-4o', max_tokens: 1400,
+            messages: [
+              { role:'system', content: systemPrompt },
+              { role:'user',   content: userMsg }
+            ]
+          })
+        });
+
+        if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || `HTTP ${res.status}`); }
+
+        const data     = await res.json();
+        const raw      = data.choices[0].message.content.trim();
+        const sections = { 'HYPOTHESIS ASSESSMENT':'', 'PIVOT POINTS':'', 'SIEM QUERIES':'', 'IOCs':'' };
+        const headers  = Object.keys(sections);
+
+        let current = null;
+        raw.split('\n').forEach(line => {
+          const cleanLine = line.replace(/^##\s*/, '').trim();
+          if (headers.includes(cleanLine)) { current = cleanLine; return; }
+          if (current) sections[current] += line + '\n';
+        });
+
+        const fmt = s => s.trim()
+          .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>')
+          .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+          .replace(/\x60([^\x60]+)\x60/g,'<code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;font-size:11px">$1</code>');
+
+        const icons = { 'HYPOTHESIS ASSESSMENT':'🎯', 'PIVOT POINTS':'🔀', 'SIEM QUERIES':'💻', 'IOCs':'📌' };
+        output.innerHTML = headers.map(h => `
+          <div class="hunt-section">
+            <div class="hunt-section-title">${icons[h]} ${h}</div>
+            <div class="hunt-section-body">${fmt(sections[h]) || '<em style="color:var(--text-3)">No data returned.</em>'}</div>
+          </div>`).join('');
+
+      } catch(err) {
+        output.innerHTML = `<div class="hunt-section"><div class="hunt-section-body" style="color:#f87171"><strong>Error:</strong> ${err.message}</div></div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 Run Hunt';
+      }
+    }
+
+    function submitToken(id) {
+      const token = document.getElementById('token-input').value.trim();
+      if (!token) return;
+      sessionStorage.setItem('github_models_token', token);
+      runAnalysis(id);
+    }
+
+    function submitTokenHunt() {
+      const token = document.getElementById('token-input-hunt').value.trim();
+      if (!token) return;
+      sessionStorage.setItem('github_models_token', token);
+      runHunt();
+    }
+
+    // ── BOOTSTRAP ────────────────────────────────────────────────────────────────
+    renderAlerts();
+
+    // ── RESIZABLE SPLIT PANEL ─────────────────────────────────────────────────────
+    (function initResizablePanel() {
+      const splitPanel   = document.getElementById('split-panel');
+      const panelFeed    = document.getElementById('panel-feed');
+      const panelAnalysis= document.getElementById('panel-analysis');
+      const handle       = document.getElementById('drag-handle');
+      if (!splitPanel || !handle) return;
+
+      let dragging = false;
+
+      handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.cursor     = 'col-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        const rect     = splitPanel.getBoundingClientRect();
+        const handleW  = 12;
+        const minFeed  = 300;
+        const minAnalysis = 280;
+        const maxFeed  = rect.width - handleW - minAnalysis;
+        const newFeed  = Math.max(minFeed, Math.min(e.clientX - rect.left - handleW / 2, maxFeed));
+        panelFeed.style.flex  = 'none';
+        panelFeed.style.width = newFeed + 'px';
+        panelAnalysis.style.flex  = '1';
+        panelAnalysis.style.width = '';
+      });
+
+      document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.cursor     = '';
+        document.body.style.userSelect = '';
+      });
+    })();
+
+    // ── ATTACK CHAIN CLICK-DRAG SCROLL ───────────────────────────────────────────
+    document.addEventListener('mousedown', function(e) {
+      const el = e.target.closest('.chain-wrap');
+      if (!el) return;
+      let startX = e.pageX, scrollLeft = el.scrollLeft, moved = false;
+      const onMove = function(e2) {
+        moved = true;
+        el.scrollLeft = scrollLeft - (e2.pageX - startX);
+      };
+      const onUp = function() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  </script>
+
+</body>
+</html>
