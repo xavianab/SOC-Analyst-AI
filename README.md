@@ -1,10 +1,10 @@
-# SOC Analyst AI — Threat Intelligence Platform
+# SOC Analyst AI | Threat Intelligence Platform
 
-> An AI-powered Security Operations Center dashboard simulating real analyst workflows — built for learning, portfolio demonstration, and cybersecurity interview preparation.
+> An AI-powered Security Operations Center dashboard simulating real analyst workflows built for learning, portfolio demonstration, and cybersecurity interview preparation.
 
 ![Platform](https://img.shields.io/badge/Platform-Web-blue)
 ![MITRE](https://img.shields.io/badge/MITRE%20ATT%26CK-v14-red)
-![AI](https://img.shields.io/badge/AI-GPT--4o%20Powered-purple)
+![AI](https://img.shields.io/badge/AI-Groq%20Llama%203.3-purple)
 ![Status](https://img.shields.io/badge/Status-Active-green)
 
 ---
@@ -13,13 +13,17 @@
 
 🔗 [Launch SOC Analyst AI](https://xavianab.github.io/SOC-Analyst-AI)
 
-> Sign up with any email and password to access the dashboard. No real credentials required.
+**Demo credentials — use these to log in:**
+- Email: `demo@socai.com`
+- Password: `demo1234`
+
+> Or sign up with any email and password to create your own account.
 
 ---
 
 ## What Is This?
 
-SOC Analyst AI is a fully functional threat intelligence dashboard that replicates the core workflow of a real Security Operations Center. Built from scratch using vanilla JavaScript, HTML, and CSS — no frameworks — to demonstrate deep understanding of SOC operations, MITRE ATT&CK, and AI-assisted threat analysis.
+SOC Analyst AI is a fully functional threat intelligence dashboard that replicates the core workflow of a real Security Operations Center. Built from scratch using vanilla JavaScript, HTML, and CSS no frameworks to demonstrate deep understanding of SOC operations, MITRE ATT&CK, and AI-assisted threat analysis.
 
 ---
 
@@ -60,7 +64,7 @@ SOC Analyst AI is a fully functional threat intelligence dashboard that replicat
 |-------|-----------|
 | Frontend | HTML5, CSS3, Vanilla JavaScript |
 | Charts | Chart.js |
-| AI Engine | GPT-4o via GitHub Models API |
+| AI Engine | Llama 3.3 via Groq API |
 | Framework | MITRE ATT&CK v14 |
 | Hosting | GitHub Pages |
 
@@ -81,9 +85,9 @@ SOC Analyst AI is a fully functional threat intelligence dashboard that replicat
 ## Roadmap
 
 - [ ] Live threat intel feed (OTX AlienVault, abuse.ch)
-- [ ] Switch to Anthropic Claude API
 - [ ] Node.js backend for persistent accounts
 - [ ] Real-time WebSocket alert streaming
+- [ ] Export reports to PDF
 
 ---
 
@@ -96,7 +100,7 @@ Built by **Xavian B** — cybersecurity professional, Seattle WA.
 - Microsoft Azure AI Engineer Associate
 - Microsoft Internship
 
-> Built to go beyond certifications — to demonstrate I don't just know the theory, I can build the tools.
+> Built to go beyond certifications to demonstrate I don't just know the theory, I can build the tools.
 
 ---
 
