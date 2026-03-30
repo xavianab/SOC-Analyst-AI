@@ -677,30 +677,6 @@
     body.light-mode .theme-btn { border-color:rgba(0,0,0,0.12); }
     body.light-mode .theme-btn:hover { background:rgba(0,0,0,0.06); }
 
-    .token-form p { margin-bottom: 12px; color: var(--text-2); font-size: 13px; }
-    .token-form input {
-      width: 100%;
-      padding: 8px 12px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 6px;
-      color: var(--text);
-      font-size: 13px;
-      box-sizing: border-box;
-    }
-    .token-form input::placeholder { color: var(--text-3); }
-    .token-form button {
-      background: var(--purple);
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      margin-top: 8px;
-      transition: background 0.2s;
-    }
-    .token-form button:hover { background: var(--purple-light); }
 
     /* ── HAMBURGER BUTTON ── */
     .hamburger-btn {
@@ -1008,7 +984,7 @@
 
     <!-- FOOTER -->
     <div class="footer">
-      <span>MITRE ATT&CK v14 · GPT-4o Powered</span>
+      <span>MITRE ATT&CK v14 · Groq AI Powered</span>
       <span>SOC ANALYST AI · THREAT INTELLIGENCE PLATFORM</span>
     </div>
 
@@ -1039,7 +1015,6 @@
     // ── LEADERBOARD DATA ──────────────────────────────────────────────────────────
     const LB = { triaged:0, tp:0, fp:0, analyses:0, confTotal:0, log:[] };
 
-    const getApiToken = () => sessionStorage.getItem('github_models_token');
 
     // ── RISK SCORE ────────────────────────────────────────────────────────────────
     const HIGH_DANGER_PREFIXES = ['T1003','T1059','T1071','T1021','T1041','T1048'];
@@ -1284,20 +1259,6 @@
           </div>
         </div>`;
 
-      if (!getApiToken()) {
-        output.innerHTML = `
-          <div class="analysis-box-header">Enter GitHub Models Token</div>
-          <div class="analysis-box-body token-form">
-            <p>Enter your GitHub Models API token to enable AI analysis. Get a free token at <a href="https://github.com/marketplace/models" target="_blank">github.com/marketplace/models</a></p>
-            <input type="password" id="token-input" placeholder="ghp_...">
-            <button onclick="submitToken('${id}')">Submit Token</button>
-          </div>
-        `;
-        btn.disabled = false;
-        btn.innerHTML = `<span>⚡</span> Run AI Analysis`;
-        return;
-      }
-
       const alertContext =
 `Title: ${a.title}
 Severity: ${a.sev.toUpperCase()}
@@ -1336,13 +1297,13 @@ After the JSON line, write your threat hunt output. Use **bold** for key terms.`
       };
 
       try {
-        const apiKey = getApiToken();
+        const apiKey = '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';
 
-        const res = await fetch('https://models.github.ai/inference/chat/completions', {
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${apiKey}` },
           body: JSON.stringify({
-            model: 'openai/gpt-4o', max_tokens: 1200,
+            model: 'llama-3.3-70b-versatile', max_tokens: 1200,
             messages: [
               { role: 'system', content: SYSTEM_PROMPTS[tier] },
               { role: 'user',   content: `Analyze this security alert:\n\n${alertContext}` }
@@ -1949,21 +1910,6 @@ ${noteHtml}
         </div>
       </div>`;
 
-      if (!getApiToken()) {
-        output.innerHTML = `
-          <div class="hunt-section">
-            <div class="hunt-section-body token-form">
-              <p>Enter your GitHub Models API token to enable AI analysis. Get a free token at <a href="https://github.com/marketplace/models" target="_blank">github.com/marketplace/models</a></p>
-              <input type="password" id="token-input-hunt" placeholder="ghp_...">
-              <button onclick="submitTokenHunt()">Submit Token</button>
-            </div>
-          </div>
-        `;
-        btn.disabled = false;
-        btn.textContent = '🔍 Run Hunt';
-        return;
-      }
-
       const alertSummary = ALERTS.map(a =>
         `[${a.id}] ${a.sev.toUpperCase()} · ${a.title} | ${a.src}→${a.dst} | ${a.rule} | MITRE:${a.mitre}`
       ).join('\n');
@@ -1981,13 +1927,13 @@ Under each header write the relevant content. Be specific, technical, and action
       const userMsg = `Hunt Hypothesis: ${hypothesis}\n\nAlert Dataset:\n${alertSummary}`;
 
       try {
-        const apiKey = getApiToken();
+        const apiKey = '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';
 
-        const res = await fetch('https://models.github.ai/inference/chat/completions', {
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${apiKey}` },
           body: JSON.stringify({
-            model: 'openai/gpt-4o', max_tokens: 1400,
+            model: 'llama-3.3-70b-versatile', max_tokens: 1400,
             messages: [
               { role:'system', content: systemPrompt },
               { role:'user',   content: userMsg }
@@ -2027,20 +1973,6 @@ Under each header write the relevant content. Be specific, technical, and action
         btn.disabled = false;
         btn.textContent = '🔍 Run Hunt';
       }
-    }
-
-    function submitToken(id) {
-      const token = document.getElementById('token-input').value.trim();
-      if (!token) return;
-      sessionStorage.setItem('github_models_token', token);
-      runAnalysis(id);
-    }
-
-    function submitTokenHunt() {
-      const token = document.getElementById('token-input-hunt').value.trim();
-      if (!token) return;
-      sessionStorage.setItem('github_models_token', token);
-      runHunt();
     }
 
     // ── BOOTSTRAP ────────────────────────────────────────────────────────────────
